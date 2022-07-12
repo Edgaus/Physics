@@ -1,15 +1,30 @@
-h1,h2,p {
-  text-align: center;
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.head {
-  background-image: url(https://d2r55xnwy6nx47.cloudfront.net/uploads/2022/07/Quantum-Supremacy_2880x1620_Lede-scaled.jpg);
-  padding: 500px;
-  font-family: sans-serif;
+img {
+  padding: 0;
+  display: block;
+  margin: 0 auto;
+  max-height: 90%;
+  max-width: 100%;
+}
+
+.title, .subtitle {
+  font-size: 10px;
+  text-align: center;
+  font-family: Shruti;
 }
 
 .body {
-  background-color: white;
+  font-size: 10px;
+  text-align: center;
+  font-family: Garamond,serif;
 }
-  
 
+.bottom-line {
+  height: 1px;
+  background-color: royalblue;
+}
