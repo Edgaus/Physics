@@ -1,6 +1,15 @@
+h1,h2,p,ul,figure,figcaption {
+  text-align:center;
+}
+
 body{
-  background: #000;
-  color: #AFF;
+  background-color: burlywood;
+  color: black;
 }
   
-  
+div{
+  width: 50%;
+  background-color: whitesmoke;
+  margin-left: auto;
+  margin-right: auto;
+}
