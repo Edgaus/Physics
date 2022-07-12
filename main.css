@@ -1,11 +1,10 @@
-h1,h2,p,ul,figure,figcaption {
-  text-align:center;
+h1,h2,p {
+  text-align: center;
 }
 
 .head {
   background-image: url(https://d2r55xnwy6nx47.cloudfront.net/uploads/2022/07/Quantum-Supremacy_2880x1620_Lede-scaled.jpg);
   padding: 500px;
-  max-width: 500px;
   font-family: sans-serif;
 }
 
