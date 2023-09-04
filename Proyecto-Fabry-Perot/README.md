@@ -1,0 +1,18 @@
+# Proyecto-Fabry-Perot
+Algoritmo Rugge Kutta para resolver un par de ecuaciones diferenciales acopladas y asi modelar un diodo laser semiconductor
+En el archivo de nombre Proyecto Final.py viene escrito en Python un algoritmo, el cual consiste en un ciclo de 200 iteraciones, donde cada iteración cambia el valor de la corriente de forma creciente desde 0mA, usando el algoritmo de Runge-Kutta adaptativo, con el propósito de resolver un par de ecuaciones diferenciales acopladas que modelan el comportamiento de un diodo laser semiconductor tipo Fabry Perot, una laser con un esperado longitud onda de 1310nm hecho a partir de InGaAsP.
+Con la información obtenida, graficar los datos obtenidos y finalmente una interpolación lineal para conocer Ith, la corriente umbral en el láser, i.e., el valor que la corriente debe tener para que el laser empiece a funcionar.
+La primera parte del algoritmo, de las líneas (12-43)  , consiste en una serie de definiciones de variables, que son parámetros específicos del tipo de laser que se está modelando , luego en las líneas (45-68), se redefinen para que se opere con ellas en las escalas apropiadas, (corriente[mA], longitud [nm] and 1nm^3=1e-21cm^3 )
+La función F (x, t), donde x es un vector de dimensión 2 donde la primera entrada represente la densidad de los portadores, la segunda entrada la densidad de los fotones que se van a evaluar. 
+La función regresa un vector F, donde F [0] representa la primera ecuación diferencial, como se comporta la densidad de los portadores con el cambio respecto del tiempo y de forma análoga F [1] se comporta la densidad de los fotones respecto del tiempo.
+La función ganancia representa la ganancia óptica que el material, un semiconductor, tiene en función de la densidad de los portadores.
+Se presenta el algoritmo de Runge Kutta adaptativo en las líneas 81,153, este algoritmo, está en función de un vector I que representa la densidad de los portadores y de los fotones inicialmente, t inicial, el tamaño del paso, y la tolerancia. 
+Regresa 4 vectores, Tiempo, Corriente, Portadores, Fotones, los cuales los 3 últimos representan el comportamiento de sus respectivos nombres del laser en función del vector Tiempo.
+En las líneas (158,178) se presenta un for de 200 iteraciones donde cada iteración i, representa el valor de la corriente en miliamperes, de 0.1 a 20. mA, cada ciclo manda a llamar a Runge-Kutta adaptativo para obtener el valor de la densidad de los portadores y de la de potencia de la Luz en función de i. Los distintos valores de la densidad de los portadores, la potencia de la luz en función de la corriente se va guardando en los vectores Pota y PotenciasL respectivamente, los vectores tiempo, corriente, portadores, PotenL modelan el comportamiento del láser a 20 mA.
+Graficamos los datos obtenidos en las líneas (188-216), las tres primeras graficas: Tiempo-corriente, Tiempo-Densidad de portadores, Tiempo-Potencia de la Luz, representan el comportamiento del láser cuando la corriente tiene un valor de 20mA, las siguientes tres gráficas,  representan el valor de la Potencia de la Luz en función de la corriente, el logaritmo natural de la potencia de la luz en función de la corriente y por ultimo la densidad de los portadores en función de la corriente
+
+En la figura 4 que se gráfica
+![Figure_1](https://user-images.githubusercontent.com/66283015/85876855-8c4aa880-b793-11ea-9eb1-952b2dd620ce.png)
+
+se observa un comportamiento lineal de la luz contra la corriente, así que finalmente en las líneas (218-238) realizamos una interpolación lineal para conocer el valor de la corriente para que la potencia de la luz sea igual a 0 y así encontrar Ith.
+
