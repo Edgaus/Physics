@@ -9,7 +9,7 @@ import matlab
 # Inicializamos Fresnel
 fres = fresnelmtx.initialize()
 
-MATERIALS = ["Air", "AlN (cubico)", "AlN (hexagonal)", "GaN (hexagonal)", "GaAs","GaN (cubico)","InGaN (cubico) 10% San_Luis", "MgO", "Si", "SiC" ,"SiO2"]
+MATERIALS = ["Air", "AlSb" ,  "Al49Ga51As","AlN (cubico)", "AlN Film" ,"AlN (hexagonal)", "GaN (hexagonal)", "GaAs","GaN (cubico)","InGaN (cubico) 10% San_Luis", "MgO", "Si" ,"SiC" ,"SiO2", "TiN","Pet" ]
 
 class LayerStackApp(tk.Tk):
     def __init__(self):
