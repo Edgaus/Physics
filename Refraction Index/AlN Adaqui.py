@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 
+
 # Programa para poder calcular la funcion dialectrica utilizando el modelo de Adaqui. Prueba 1 para el GaN
 
 
@@ -14,11 +15,11 @@ def dialectric_function(E):
 
 
     # Calculo para la contribucion de la funcion dialectrica de epsilon 0
-    A_0 = 41.251
-    E_0 = 3.550
-    alpha_0 = 1.241
+    A_0 = 5.648
+    E_0 = 6.222
+    alpha_0 = 0.465
 
-    Gamma_0 = 0.287
+    Gamma_0 = 0.439
     Gamma_0_mod = Gamma_0*np.exp(  -alpha_0*( (  (E-E_0)/Gamma_0     )**2  )  )
     Chi_0 = (E + Gamma_0_mod*1j)/E_0
 
@@ -28,8 +29,8 @@ def dialectric_function(E):
 
     m = 20
     e_0X = 0
-    A_0X = 0.249
-    G_0X = 0.030
+    A_0X = 0.600
+    G_0X = 0.060
 
     for i in range(m):
         e_0X = e_0X   + (A_0X /(i+1)**3)    *      (1   /   (  E_0 - (G_0X/(i+1)**2) - E -  Gamma_0_mod*1j     )    ) 
@@ -37,10 +38,10 @@ def dialectric_function(E):
 
     # Calculando la contribucion de la funcion dialectrica de epsilon 1
 
-    beta_1 = [0.778, 0.103, 0.920  ]
-    Gamma_1 = [ 0.743  , 0.428, 0.440  ]
-    E_1 = [ 6.010, 8.182, 8.761]
-    alpha_1 = [ 0.240, 0.011, 0.005 ]
+    beta_1 = [0.236, 0.037, 0.230  ]
+    Gamma_1 = [ 0.064  , 2.045, 0.411 ]
+    E_1 = [ 12.055, 8.841, 12.900]
+    alpha_1 = [ 0.747, 0.687, 1.913 ]
     Gamma_1_mod = [0,0,0]
 
     e_1 = 0
@@ -54,8 +55,8 @@ def dialectric_function(E):
         
     n = 20
 
-    beta_1X = [2.042, 1.024, 1.997]
-    G_1X = [ 0.0003, 0.356, 1.962 ]
+    beta_1X = [1.393, 1.655, 3.234]
+    G_1X = [ 2.880, 0.980, 5.507 ]
 
     e_1X = 0
     for l in range(3):
@@ -66,7 +67,7 @@ def dialectric_function(E):
 
 
 
-    e_inf = 0.426
+    e_inf = 1.230
     e_total = e_inf + e_0 + e_0X - e_1 + e_1X
     
     e12_1 = e_total.real
@@ -78,7 +79,7 @@ def dialectric_function(E):
 
     return n_index, k_coef
 
-Energy = np.linspace (1,7,1000 )
+Energy = np.linspace (6.3,9,1000 )
 
 n_result, k_result =  dialectric_function( Energy  )
 
@@ -87,7 +88,8 @@ data_to_save = np.column_stack((Energy, n_result, k_result))
 
 # 2. Save to a CSV file
 np.savetxt(
-    "GaN_complex_index.csv",       # The name of the file you want to create
+    "Refraction Index\AlN_complex_index.csv",       # The name of the file you want to create
+
     data_to_save,                # The stacked data
     delimiter=",",               # This separates the values with a comma
     header="Energy (eV),n,k",          # Adds a title row at the top of the file
@@ -95,6 +97,6 @@ np.savetxt(
     fmt="%.6f"                   # Optional: Formats the numbers to 6 decimal places for readability
 )
 
-print("Data successfully saved to GaN complex refractive Index.csv")
+print("Data successfully saved to AlN complex refractive Index.csv")
 
 

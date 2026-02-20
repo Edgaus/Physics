@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import dual_annealing
 
 
 # Programa para poder calcular la funcion dialectrica utilizando el modelo de Adaqui. Prueba 1 para el GaN
@@ -72,11 +74,7 @@ def dialectric_function(E):
     e12_1 = e_total.real
     e12_2 = e_total.imag
 
-    n_index = np.sqrt(  (np.sqrt(e12_1**2+e12_2**2  ) +e12_1  ) /2  )
-    k_coef = np.sqrt(  (np.sqrt(e12_1**2+e12_2**2  ) -e12_1  ) /2  )
-
-
-    return n_index, k_coef
+    return e12_1, e12_2
 
 Energy = np.linspace (1,7,1000 )
 
@@ -87,14 +85,14 @@ data_to_save = np.column_stack((Energy, n_result, k_result))
 
 # 2. Save to a CSV file
 np.savetxt(
-    "GaN_complex_index.csv",       # The name of the file you want to create
+    "optical_results.csv",       # The name of the file you want to create
     data_to_save,                # The stacked data
     delimiter=",",               # This separates the values with a comma
-    header="Energy (eV),n,k",          # Adds a title row at the top of the file
+    header="omega,n,k",          # Adds a title row at the top of the file
     comments="",                 # Prevents NumPy from adding a '#' before the header
     fmt="%.6f"                   # Optional: Formats the numbers to 6 decimal places for readability
 )
 
-print("Data successfully saved to GaN complex refractive Index.csv")
+print("Data successfully saved to optical_results.csv")
 
 
