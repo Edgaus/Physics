@@ -20,6 +20,9 @@ def dialectric_function(E):
 
     Gamma_0 = 0.287
     Gamma_0_mod = Gamma_0*np.exp(  -alpha_0*( (  (E-E_0)/Gamma_0     )**2  )  )
+
+    Gamma_0_mod = Gamma_0
+
     Chi_0 = (E + Gamma_0_mod*1j)/E_0
 
     e_0 =  A_0* (E_0**(-3/2)) * (Chi_0**(-2))*(  2- ((1+Chi_0)**(1/2)) - (1-Chi_0)**(1/2)       )
@@ -46,6 +49,8 @@ def dialectric_function(E):
     e_1 = 0
     for j in range(3):
         Gamma_1_mod[j] = Gamma_1[j]* np.exp(  -alpha_1[j]*( (  (E-E_1[j])/Gamma_1[j]     )**2  )  )
+
+        Gamma_1_mod[j] = Gamma_1[j]
 
         shi_1 = ( E + Gamma_1_mod[j]*1j )/E_1[j] 
         e_1 = e_1 +  ( beta_1[j] *(shi_1**(-2)) * np.log(1-shi_1**2)  )

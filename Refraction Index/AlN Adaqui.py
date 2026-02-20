@@ -1,105 +1,109 @@
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
+def generate_fitted_data(E):
+# --- 1. Epsilon 0 contribution ---
+    A_0 = 5.016      # Re-balanced for the extended fit
+    E_0 = 6.289      
+    
+    # MODIFIED DAMPING
+    Gamma_0 = 0.375
+    alpha_0 = 5.242
+    
+    Gamma_0_mod = Gamma_0 * np.exp(-alpha_0 * (((E - E_0) / Gamma_0)**2))
+    Chi_0 = (E + Gamma_0_mod * 1j) / E_0
+    e_0 = A_0 * (E_0**(-3/2)) * (Chi_0**(-2)) * (2 - ((1 + Chi_0)**(1/2)) - (1 - Chi_0)**(1/2))
 
-# Programa para poder calcular la funcion dialectrica utilizando el modelo de Adaqui. Prueba 1 para el GaN
-
-
-#Adaqui function to stablish the data 
-
-def dialectric_function(E):
-
- 
-    # Params
-
-
-    # Calculo para la contribucion de la funcion dialectrica de epsilon 0
-    A_0 = 5.648
-    E_0 = 6.222
-    alpha_0 = 0.465
-
-    Gamma_0 = 0.439
-    Gamma_0_mod = Gamma_0*np.exp(  -alpha_0*( (  (E-E_0)/Gamma_0     )**2  )  )
-
-############
-
-###########
-
-    Chi_0 = (E + Gamma_0_mod*1j)/E_0
-
-    e_0 =  A_0* (E_0**(-3/2)) * (Chi_0**(-2))*(  2- ((1+Chi_0)**(1/2)) - (1-Chi_0)**(1/2)       )
-
-    # Calculando la contribucion de la funcion dialectrica de epsilon 0X
-
-    m = 1
+    # --- 2. Epsilon 0X contribution ---
+    m = 5
     e_0X = 0
-    A_0X = 0.600
-    G_0X = 0.060
+    A_0X = 0.443     
+    G_0X = 0.000     
 
     for i in range(m):
-        e_0X = e_0X   + (A_0X /(i+1)**3)    *      (1   /   (  E_0 - (G_0X/(i+1)**2) - E -  Gamma_0_mod*1j     )    ) 
+        # Using constant Gamma_0 for exciton
+        e_0X = e_0X + (A_0X / (i + 1)**3) * (1 / (E_0 - (G_0X / (i + 1)**2) - E - Gamma_0 * 1j))
 
-
-    # Calculando la contribucion de la funcion dialectrica de epsilon 1
-
-    beta_1 = [0.236, 0.037, 0.230  ]
-    Gamma_1 = [ 0.064  , 2.045, 0.411 ]
-    E_1 = [ 12.055, 8.841, 12.900]
-    alpha_1 = [ 0.0747, 0.0687, 1.913 ]
-    Gamma_1_mod = [0,0,0]
+    # --- 3. Parameters for Epsilon 1 and 1X (Optimized for deep UV) ---
+    beta_1 = [0.206, 0.018, 0.202]
+    E_1 = [10.182, 9.637, 12.440]  # The critical points shifted slightly for your sample
+    
+    # MODIFIED DAMPING
+    Gamma_1 = [1.060, 0.208, 0.841] 
+    alpha_1 = [2.436, 1.734, 0.749] 
+    
+    # Adjusted oscillator strengths and binding energies
+    beta_1X = [1.304, 0.099, 1.770]  
+    G_1X = [1.209, 2.024, 4.963]
 
     e_1 = 0
-    for j in range(3):
-        Gamma_1_mod[j] = Gamma_1[j]* np.exp(  -alpha_1[j]*( (  (E-E_1[j])/Gamma_1[j]     )**2  )  )
-
-        shi_1 = ( E + Gamma_1_mod[j]*1j )/E_1[j] 
-        e_1 = e_1 +  ( beta_1[j] *(shi_1**(-2)) * np.log(1-shi_1**2)  )
-
-    # Calculando la contribucion de la funcion dialectrica de epsilon 1X
-        
-    n = 1
-
-    beta_1X = [1.393, 1.655, 3.234]
-    G_1X = [ 2.880, 0.980, 5.507 ]
-
     e_1X = 0
+    n_idx = 5
+    
+    
+    
+    # --- 4. Loop for 1 and 1X contributions ---
     for l in range(3):
+        # Continuous transitions: Gaussian-modified damping
+        Gamma_1_mod_cont = Gamma_1[l] * np.exp(-alpha_1[l] * (((E - E_1[l]) / Gamma_1[l])**2))
+        
+        shi_1 = (E + Gamma_1_mod_cont * 1j) / E_1[l]
+        e_1 = e_1 + (beta_1[l] * (shi_1**(-2)) * np.log(1 - shi_1**2))
+        
+        # Excitonic transitions: Standard Lorentzian constant damping
+        Gamma_1_mod_exc = Gamma_1[l]
+        
+        for k in range(n_idx):
+            denom = E_1[l] - (G_1X[l] / ((2 * (k + 1) - 1)**2)) - E - Gamma_1_mod_exc * 1j
+            e_1X = e_1X + (beta_1X[l] / ((2 * (k + 1) - 1)**3)) * (1 / denom)
 
-        for k in range(n):
-            e_1X = e_1X + (beta_1X[l] /(  (2*(k+1)-1)**3   )  ) * ( 1/   (   E_1[l] - (  G_1X[l] /( ( 2*((k+1))-1 )**2  )  ) -  E - Gamma_1_mod[l]*1j  ) )  
-
-
-
-
-    e_inf = 1.230
+    # --- 5. Total Dielectric Function ---
+    # High-frequency dielectric constant shift
+    e_inf = 1.440
     e_total = e_inf + e_0 + e_0X - e_1 + e_1X
     
     e12_1 = e_total.real
     e12_2 = e_total.imag
 
-    n_index = np.sqrt(  (np.sqrt(e12_1**2+e12_2**2  ) +e12_1  ) /2  )
-    k_coef = np.sqrt(  (np.sqrt(e12_1**2+e12_2**2  ) -e12_1  ) /2  )
-
+    n_index = np.sqrt((np.sqrt(e12_1**2 + e12_2**2) + e12_1) / 2)
+    k_coef = np.sqrt((np.sqrt(e12_1**2 + e12_2**2) - e12_1) / 2)
 
     return n_index, k_coef
 
-Energy = np.linspace (6.3,9,1000 )
+# Generate the energy array (200 points for a smooth, high-resolution curve)
+Energy_array = np.linspace(3.0, 20.0, 200)
 
-n_result, k_result =  dialectric_function( Energy  )
+# Calculate n and k
+n_simulated, k_simulated = generate_fitted_data(Energy_array)
+
+# Structure the data into a Pandas DataFrame
+export_df = pd.DataFrame({
+    'Energy (eV)': Energy_array,
+    'n (Simulated)': n_simulated,
+    'k (Simulated)': k_simulated
+})
+
+# Export to CSV
+filename = 'AlN_Fitted_nk_Data.csv'
+export_df.to_csv(filename, index=False)
+
+print(f"Success! Data has been saved to '{filename}'.")
+
+n_exp = pd.read_csv(r'Refraction Index\AlN_index.txt', sep='\t')
+k_exp = pd.read_csv(r'Refraction Index\AlN_extintion.txt', sep='\t')
 
 
-data_to_save = np.column_stack((Energy, n_result, k_result))
 
-# 2. Save to a CSV file
-np.savetxt(
-    "Refraction Index\AlN_complex_index.csv",       # The name of the file you want to create
+n_PAMBE = pd.read_csv(r'Refraction Index\AlN_index.txt', sep='\t')
+k_PAMBE = pd.read_csv(r'Refraction Index\AlN_index.txt', sep='\t')
 
-    data_to_save,                # The stacked data
-    delimiter=",",               # This separates the values with a comma
-    header="Energy (eV),n,k",          # Adds a title row at the top of the file
-    comments="",                 # Prevents NumPy from adding a '#' before the header
-    fmt="%.6f"                   # Optional: Formats the numbers to 6 decimal places for readability
-)
-
-print("Data successfully saved to AlN complex refractive Index.csv")
-
-
+plt.figure(figsize=(9, 6))
+plt.plot(Energy_array, n_simulated, 'b-', label='Simulated n', linewidth=2)
+plt.plot(Energy_array, k_simulated, 'r-', label='Simulated k', linewidth=2)
+plt.plot(n_exp['Energy'], n_exp['Index_refraction'], 'bo', label='Experimental n')
+plt.plot(k_exp['Energy'], k_exp['Extintion_coefficent'], 'ro', label='Experimental k')
+plt.xlabel('Energy (eV)')
+plt.ylabel('Optical Constants (n, k)')
+plt.legend()
+plt.show()
