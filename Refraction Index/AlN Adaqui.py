@@ -95,14 +95,16 @@ k_exp = pd.read_csv(r'Refraction Index\AlN_extintion.txt', sep='\t')
 
 
 
-n_PAMBE = pd.read_csv(r'Refraction Index\AlN_index.txt', sep='\t')
-k_PAMBE = pd.read_csv(r'Refraction Index\AlN_index.txt', sep='\t')
+n_PAMBE = pd.read_csv(r'Refraction Index\AlN Film_n.txt', sep='\t')
+k_PAMBE = pd.read_csv(r'Refraction Index\AlN Film_k.txt', sep='\t')
 
 plt.figure(figsize=(9, 6))
 plt.plot(Energy_array, n_simulated, 'b-', label='Simulated n', linewidth=2)
 plt.plot(Energy_array, k_simulated, 'r-', label='Simulated k', linewidth=2)
 plt.plot(n_exp['Energy'], n_exp['Index_refraction'], 'bo', label='Experimental n')
 plt.plot(k_exp['Energy'], k_exp['Extintion_coefficent'], 'ro', label='Experimental k')
+plt.plot(n_PAMBE['Energy'], n_PAMBE['n'], 'go', label='n-AlN/Si(111) PAMBE')
+plt.plot(k_PAMBE['Energy'], k_PAMBE['k'], 'yo', label='AlN/Si(111) PAMBE')
 plt.xlabel('Energy (eV)')
 plt.ylabel('Optical Constants (n, k)')
 plt.legend()
