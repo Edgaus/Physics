@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+
 
 
 # Programa para poder calcular la funcion dialectrica utilizando el modelo de Adaqui. Prueba 1 para el GaN
@@ -78,7 +78,7 @@ def dialectric_function(E):
 
     return n_index, k_coef
 
-Energy = np.linspace (1,7,1000 )
+Energy = np.linspace (1,9,1000 )
 
 n_result, k_result =  dialectric_function( Energy  )
 
