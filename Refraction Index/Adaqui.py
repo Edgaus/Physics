@@ -72,7 +72,7 @@ def dialectric_function(E):
 
 
     e_inf = 0.426
-    e_total = e_inf + e_0 + e_0X - e_1 + e_1X
+    e_total =  e_0
     
     e12_1 = e_total.real
     e12_2 = e_total.imag
