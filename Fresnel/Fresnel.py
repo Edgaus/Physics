@@ -7,12 +7,15 @@ import numpy as np
 import fresnelmtx 
 import matlab
 
+#Any problems with the fresnelmtx package, initialize it here with cmd: pip install .
+
+
 fres = fresnelmtx.initialize()
 
 
 
 
-MATERIALS = ["Air", "AlN (cubico)", "AlN (hexagonal)", "GaN (hexagonal)", "GaAs","GaN (cubico)","InGaN (cubico) 10% San_Luis", "MgO", "Si", "SiC" ,"SiO2"]
+MATERIALS = ["Air", "AlN (cubico)", "AlN (hexagonal)", "GaN (hexagonal)", "GaAs","GaN (cubico)","InGaN (cubico) 10_ San Luis", "MgO", "Si", "SiC" ,"SiO2"]
 
 
 
