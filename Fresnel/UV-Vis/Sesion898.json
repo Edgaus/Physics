@@ -1,0 +1,338 @@
+{
+    "params": {
+        "lambda_start": 300.0,
+        "lambda_end": 1100.0,
+        "theta_inc": 15.0,
+        "polarization": "Mixed"
+    },
+    "layers": [
+        {
+            "material": "Air",
+            "t_val": 100.0,
+            "t_min": 50.0,
+            "t_max": 200.0,
+            "is_opt": true,
+            "is_boundary": true
+        },
+        {
+            "material": "AlN (cubico)",
+            "t_val": 100.0,
+            "t_min": 50.0,
+            "t_max": 200.0,
+            "is_opt": true,
+            "is_boundary": false
+        },
+        {
+            "material": "SiC",
+            "t_val": 100.0,
+            "t_min": 1530.0,
+            "t_max": 1540.0,
+            "is_opt": true,
+            "is_boundary": false
+        },
+        {
+            "material": "Si",
+            "t_val": 100.0,
+            "t_min": 50.0,
+            "t_max": 200.0,
+            "is_opt": true,
+            "is_boundary": true
+        }
+    ],
+    "peaks": [
+        {
+            "type": "Maxima",
+            "x": 1032.0,
+            "y": 29.458,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 914.0,
+            "y": 29.151,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 832.0,
+            "y": 31.242,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 758.0,
+            "y": 29.091,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 696.0,
+            "y": 27.169,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 646.0,
+            "y": 25.737,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 602.0,
+            "y": 24.462,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 518.0,
+            "y": 26.878,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 492.0,
+            "y": 30.18,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 468.0,
+            "y": 34.59,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 446.0,
+            "y": 39.989999,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 426.0,
+            "y": 44.255,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 410.0,
+            "y": 49.246,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 394.0,
+            "y": 54.847,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 380.0,
+            "y": 63.2,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 368.0,
+            "y": 67.288,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 356.0,
+            "y": 66.696999,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 346.0,
+            "y": 64.054,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 336.0,
+            "y": 63.982,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 326.0,
+            "y": 67.14,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 310.0,
+            "y": 65.193,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 296.0,
+            "y": 60.763,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 284.0,
+            "y": 55.728999,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 274.0,
+            "y": 48.595,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Maxima",
+            "x": 264.0,
+            "y": 39.855,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 974.0,
+            "y": 14.993,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 874.0,
+            "y": 16.32,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 792.0,
+            "y": 17.285,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 726.0,
+            "y": 17.293,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 670.0,
+            "y": 18.051,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 620.0,
+            "y": 19.204,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 576.0,
+            "y": 20.732,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 508.0,
+            "y": 21.288,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 480.0,
+            "y": 21.243,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 456.0,
+            "y": 21.56,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 436.0,
+            "y": 21.581,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 418.0,
+            "y": 21.034,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 402.0,
+            "y": 20.604,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 386.0,
+            "y": 21.813,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 374.0,
+            "y": 19.259,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 362.0,
+            "y": 19.039,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 350.0,
+            "y": 21.44,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 340.0,
+            "y": 22.115,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 322.0,
+            "y": 25.994,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 306.0,
+            "y": 28.695,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 292.0,
+            "y": 32.925,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 276.0,
+            "y": 31.059,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 262.0,
+            "y": 33.222,
+            "sim_y": 0.0
+        },
+        {
+            "type": "Minima",
+            "x": 240.0,
+            "y": 29.49,
+            "sim_y": 0.0
+        }
+    ]
+}
