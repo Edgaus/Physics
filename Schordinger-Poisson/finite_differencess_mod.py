@@ -45,8 +45,6 @@ def finite_differences(P, Mass, diff, L):
 
     A = np.diag(Adiag, k=0) + np.diag(Ainf, k=-1) + np.diag(Asup, k=1)
     
-    # REMOVED: L = np.diag(L) 
-    # L remains a 1D array of length 'n'
 
     # 1. Do the broadcasting with the 1D array
     C = A * (L[:, np.newaxis] / L)

@@ -5,6 +5,9 @@ from scipy.interpolate import interp1d
 import numpy as np
 import finite_differencess as fd
 import finite_differencess_mod as mfd
+import Poisson_differences_methods as pfd
+import Poisson_modified as pm
+
 
 # Masses are in m0 units and energy is in eV
 
@@ -24,20 +27,18 @@ constant_x=0.2
 AlxGa1_xAs = { 
         'mass_e': (0.067+0.083*constant_x),
         'Bandgap' : (1.426+1.247*constant_x),
-        'dielectric' : 13.18
+        'dielectric' : 13.18-3.12*constant_x
         }
 
 
+structure = [ GaAs, AlGaAs, AlGaAs, GaAs ]
 
 
-#structure = [ GaAs, AlGaAs, AlGaAs, GaAs ]
-structure = [ AlxGa1_xAs, GaAs, AlxGa1_xAs ]
+#Concentration donors
+thickness = [ 150, 200, 50, 5000]   # Thickness is in Armstrongs
+mesh_array= [0.5,0.5,0.5,0.5]  
 
-#thickness = [ 150, 200, 50, 5000]   # Thickness is in Armstrongs
-thickness = [ 200, 100, 200]   # Thickness is in Armstrongs
-
-
-mesh_array= [0.05,0.05,0.05]  
+Nd = [1E18, 1E18, 0, 0]
 
 Band_Edge_Potential = []
 mass_e = []
@@ -55,35 +56,40 @@ Band_Edge_Potential = np.array(Band_Edge_Potential)
 Band_Edge_Potential = (Band_Edge_Potential - Band_Edge_Potential.min()) *Band_offsset
 
 
-# Así
-
 grider = gr.Grider( thickness, 'uniform',  mesh_array )
 
-######### variable, uniform , constant
+########################## variable, uniform , constant ##########################
+
 x, diff =    grider.grid_axis()
-######### step or inf_sheet_Band_Edge_Potential
 
-Band_Edge_Potential_grid =        grider.grid_propertie( Band_Edge_Potential,       'step'  )
-mass_e_grid =           grider.grid_propertie( mass_e,          'step'  )
-dielec_grid =           grider.grid_propertie( dielec,          'step'  )
-#inf_sheet_grid =        grider.grid_propertie( propertie_array=None, type_propertie='inf_sheet_Band_Edge_Potential' )
+L = np.zeros_like(diff)
+L[0] =  ( diff[0] ) 
+L[-1] =  ( diff[-1] )
+for i in range( 1, len(L)-1 ):
+    L[i] = (0.5*( diff[i-1] + diff[i]  ))
 
+########################## Constants ##########################
 
-########################## Solving Schrodinger equation
-values, funct = mfd.finite_differences_mod( Band_Edge_Potential_grid , mass_e_grid , diff  )
-#values, funct = fd.finite_differences( Band_Edge_Potential_grid , mass_e_grid , diff  )
+mass_e_grid =                   grider.grid_propertie( mass_e, 'step'  )
+Band_Edge_Potential_grid =      grider.grid_propertie( Band_Edge_Potential, 'step'  )
+Nd_grid =                       grider.grid_propertie( Nd, 'step'  )
+phi = np.zeros_like( Band_Edge_Potential_grid )
 
+########################## Solving Schrodinger equation ##########################
 
-########################## Print and Plot
+values, funct = mfd.finite_differences( Band_Edge_Potential_grid , mass_e_grid , diff, L )
 
-# 1. Sort and prepare your data
-idx = np.argsort(values)
-energies = values[idx]       # Energies in meV (because of your *1000 in fd)
-eigenvectors = funct[:, idx] # Each column is a wavefunction
-psi0 = funct[:, 0]
+########################## Rename the Wavefuctions ##########################
 
-m = 1
+lista_de_arreglos = []
+for k in range(3):
+        nuevo_vector =  (funct[:,k]/L)**2
+        lista_de_arreglos.append(nuevo_vector)
 
-print( f'Los {m} niveles de energía son {energies[0:m]}')
-plt.plot(x, psi0)
-plt.show()
+# Al final, los "apilamos" todos en el axis=0
+waves = np.stack(lista_de_arreglos, axis=0)
+
+########################## Poisson mod ##########################
+
+phi_elec, error_phi =  pm.poisson( phi,  )
+
