@@ -33,7 +33,7 @@ structure = [ AlxGa1_xAs, GaAs, AlxGa1_xAs]
 #Concentration donors
 
 
-mesh_array= [0.5,0.5,0.5]  
+mesh_array= [0.1,0.1,0.1]  
 
 thickness = [200,100,200]
 
@@ -70,6 +70,8 @@ L[-1] =  ( diff[-1] )
 for i in range( 1, len(L)-1 ):
     L[i] = (0.5*( diff[i-1] + diff[i]  ))
 
+L_matrix = np.diag(1/L)
+
 ########################## Constants ##########################
 
 mass_e_grid =                   grider.grid_propertie( mass_e, 'step'  )
@@ -94,6 +96,8 @@ while (np.min(error_phi)>1E-8) and (i<10):
     
     #  Schrödinger con el nuevo pozo
     values, funct = mfd.finite_differences( V_total , mass_e_grid , diff, L )
+
+    norm_eigen = L_matrix * funct
 
     print(f'Iteración {i:02d} | Energía del estado base es: {values[0]:.4f} meV')
 

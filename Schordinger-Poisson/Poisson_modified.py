@@ -49,7 +49,11 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
     cdiag[0] = -2 * csup[0]
     cdiag[-1] = -2 * cinf[-1]
 
-    # Calculate Probability and Jacobian Term B
+
+
+################## Calculation A and B termns  #####################
+
+
     for k in range(number_energies):
         psi_squared = eigen_vectors[:, k]**2
         
@@ -59,7 +63,7 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
         term_B += (psi_squared) / L
 
     # Añadimos el a la diagonal principal
-    main_band= cdiag + constant * term_B
+
     Cij = np.diag(cdiag, k=0) + np.diag(cinf, k=-1) + np.diag(csup, k=1)
 
     # Calculamos N_2D integrand Nd espacialmente
@@ -68,17 +72,28 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
     # Obtenemos la densidad volumétrica tridimensional real
     n_volumetrico = N_2D * eigen_concen
 
-    # Residual xi equilibrado física y dimensionalmente
+
+
+
+################## Solve for small increment of electrostatic field  #####################
+
+
+   
     xi = (Cij @ phi) + qe * (Nd_m - n_volumetrico) / vacuum_permitivity
     
     # Corrección de padding exigida por scipy.linalg.solve_banded
+
     upper_band = np.append(0, csup)
     lower_band = np.append(cinf, 0)
+    main_band= cdiag + constant * term_B
 
     ab = np.array([upper_band, main_band, lower_band])
     delta_phi = solve_banded((1, 1), ab, -xi)
 
-    # Versión robusta y rápida
+
+
+################## Solve for small increment of electrostatic field  #####################
+
     with np.errstate(divide='ignore', invalid='ignore'):
         # Calculamos el error relativo nodo a nodo
         # Si phi es 0 (como en la primera iteración), asignamos 1.0 (100% de error)
