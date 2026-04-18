@@ -1,11 +1,8 @@
 # Define the layers that define my structure
 import Grid as gr
 from matplotlib import pyplot as plt
-from scipy.interpolate import interp1d
 import numpy as np
-import finite_differencess as fd
 import finite_differencess_mod as mfd
-import Poisson_differences_methods as pfd
 import Poisson_modified as pm
 
 
@@ -22,7 +19,7 @@ GaAs = {
         'dielectric' : 13.18
         }
   
-constant_x=0.3
+constant_x=0.2
 
 AlxGa1_xAs = { 
         'mass_e': (0.067+0.083*constant_x),
@@ -30,15 +27,19 @@ AlxGa1_xAs = {
         'dielectric' : 13.18-3.12*constant_x
         }
 
-
-structure = [ GaAs, AlGaAs, AlGaAs, GaAs ]
+structure = [ AlxGa1_xAs, GaAs, AlxGa1_xAs] 
 
 
 #Concentration donors
-thickness = [ 150, 200, 50, 5000]   # Thickness is in Armstrongs
-mesh_array= [0.5,0.5,0.5,0.5]  
 
-Nd = [1E18, 1E18, 0, 0]
+
+mesh_array= [0.5,0.5,0.5]  
+
+thickness = [200,100,200]
+
+
+Nd = [0, 2E18, 0]
+
 
 Band_Edge_Potential = []
 mass_e = []
@@ -48,8 +49,9 @@ for layer in structure:
     Band_Edge_Potential.append( layer.get('Bandgap')  )
     mass_e.append( layer.get('mass_e') )
     dielec.append( layer.get('dielectric') )
-     
-Band_offsset = 0.6146
+
+
+Band_offsset = 0.67
 
 # Convertir a array de NumPy para poder operar
 Band_Edge_Potential = np.array(Band_Edge_Potential)
@@ -73,25 +75,36 @@ for i in range( 1, len(L)-1 ):
 mass_e_grid =                   grider.grid_propertie( mass_e, 'step'  )
 Band_Edge_Potential_grid =      grider.grid_propertie( Band_Edge_Potential, 'step'  )
 Nd_grid =                       grider.grid_propertie( Nd, 'step'  )
-dielec_grid =                   grider.grid_propertie( Nd, 'step'  )
+dielec_grid =                   grider.grid_propertie( dielec, 'step'  )
 
 phi = np.zeros_like( Band_Edge_Potential_grid )
 
-########################## Solving Schrodinger equation ##########################
-
-energ, funct = mfd.finite_differences( Band_Edge_Potential_grid , mass_e_grid , diff, L )
-
-########################## Rename the Wavefuctions ##########################
-
-lista_de_arreglos = []
-for k in range(3):
-        nuevo_vector =  (funct[:,k]/L)**2
-        lista_de_arreglos.append(nuevo_vector)
-
-# Al final, los "apilamos" todos en el axis=0
-waves = np.stack(lista_de_arreglos, axis=0)
 
 ########################## Poisson mod ##########################
 
-phi_elec, error_phi =  pm.poisson( phi, Nd_grid, dielec_grid, mass_e_grid, energ, waves   )
+i=0
+phi = np.zeros_like( Band_Edge_Potential_grid )
+error_phi = np.ones_like( phi)
+m=1
 
+while (np.min(error_phi)>1E-8) and (i<10): 
+
+    # 1. Potencial Total
+    V_total = Band_Edge_Potential_grid - phi    
+    
+    #  Schrödinger con el nuevo pozo
+    values, funct = mfd.finite_differences( V_total , mass_e_grid , diff, L )
+
+    print(f'Iteración {i:02d} | Energía del estado base es: {values[0]:.4f} meV')
+
+    
+    # Poisson
+    delta_phi, error_phi = pm.poisson( phi, Nd_grid, dielec_grid, mass_e_grid, values[0:m], funct[:,0:m], diff, L )
+    
+    print( np.min(error_phi) )
+    
+    phi = phi + ( delta_phi)
+    i +=1
+
+if i == 10:
+    print('No convergió')
