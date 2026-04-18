@@ -39,15 +39,11 @@ structure = [ AlxGa1_xAs, GaAs, AlxGa1_xAs ]
 
 
 #Concentration donors
-Nd = [1E18,1E18,0,0]  # Concentracion de donadores a cm^-3
-m = 2
+Nd = [0,2E18,0]  # Concentracion de donadores a cm^-3
 
 
-
-thickness = [ 150, 200, 50, 5000]   # Thickness is in Armstrongs
-#thickness = [ 200, 100, 200]   # Thickness is in Armstrongs
-
-thickness = [  ]
+#thickness = [ 150, 200, 50, 5000]   # Thickness is in Armstrongs
+thickness = [ 200, 100, 200]   # Thickness is in Armstrongs
 
 
 mesh_array= [0.1,0.1,0.1]  
@@ -94,14 +90,14 @@ Nd_grid                  =      grider.grid_propertie( Nd,          'step'  )
 # Inicializamos el potencial inducido en cero
 inf_sheet_grid = np.zeros_like(Band_Edge_Potential_grid) 
 
-m = 3
+m = 1
 
 print("Iniciando convergencia Poisson-Schrödinger...")
 i=0
 
 error_phi = np.ones_like(Band_Edge_Potential_grid)
 
-while (np.min(error_phi)>1E-16) and (i<10): 
+while (np.min(error_phi)>1E-8) and (i<10): 
 
     # 1. Potencial Total
     V_total = Band_Edge_Potential_grid - inf_sheet_grid    
@@ -111,10 +107,9 @@ while (np.min(error_phi)>1E-16) and (i<10):
     
     print(f'Iteración {i:02d} | Energía del estado base es: {values[0]:.4f} meV')
 
-
-
+    
     # Poisson
-    delta_phi, error_phi = pm.poisson( inf_sheet_grid, Nd_grid, dielec_grid, mass_e_grid, values[0:m], funct[:,0:m], diff, L )
+    delta_phi, error_phi = pfd.poisson( inf_sheet_grid, Nd_grid, dielec_grid, mass_e_grid, values[0:m], funct[:,0:m], diff, L )
     
     print( np.min(error_phi) )
     

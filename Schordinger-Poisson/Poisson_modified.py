@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import solve_banded
 
-def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff):
+def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
     vacuum_permitivity = 8.85E-12
     m0 = 9.11E-31
     qe = 1.602E-19
@@ -11,11 +11,7 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff):
     constant = Mass * m0 * (qe**2) / (vacuum_permitivity * np.pi * hbar**2)
 
     m = len(epsilon)
-    number_energies = len(eigen_energies)
-    Fermi_level = (eigen_energies[0] + eigen_energies[1])/2
-    print( Fermi_level )
-
-
+    number_energies = 1
 
     # AQUÍ DEFINES diff_m (Conversión de Angstroms a Metros)
     diff_m = np.asarray(diff) * 1E-10
@@ -50,20 +46,15 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff):
     cdiag[0] = -2 * csup[0]
     cdiag[-1] = -2 * cinf[-1]
 
-############################### Cij elements ####################
-
-    
-
     # Calculate Probability and Jacobian Term B
     for k in range(number_energies):
-        psi_squared = eigen_vectors[:, k]**2
+        psi_squared = eigen_vectors
         
         # eigen_concen es la probabilidad espacial real (1/m)
         eigen_concen += psi_squared 
         
         # term_B es el Jacobiano para la diagonal (1/m^2)
         term_B += (psi_squared) 
-
     # Añadimos el Jacobiano a la diagonal principal
     main_band= cdiag + constant * term_B
     Cij = np.diag(cdiag, k=0) + np.diag(cinf, k=-1) + np.diag(csup, k=1)

@@ -22,7 +22,7 @@ GaAs = {
         'dielectric' : 13.18
         }
   
-constant_x=0.2
+constant_x=0.3
 
 AlxGa1_xAs = { 
         'mass_e': (0.067+0.083*constant_x),
@@ -49,7 +49,7 @@ for layer in structure:
     mass_e.append( layer.get('mass_e') )
     dielec.append( layer.get('dielectric') )
      
-Band_offsset = 0.67
+Band_offsset = 0.6146
 
 # Convertir a array de NumPy para poder operar
 Band_Edge_Potential = np.array(Band_Edge_Potential)
@@ -73,11 +73,13 @@ for i in range( 1, len(L)-1 ):
 mass_e_grid =                   grider.grid_propertie( mass_e, 'step'  )
 Band_Edge_Potential_grid =      grider.grid_propertie( Band_Edge_Potential, 'step'  )
 Nd_grid =                       grider.grid_propertie( Nd, 'step'  )
+dielec_grid =                   grider.grid_propertie( Nd, 'step'  )
+
 phi = np.zeros_like( Band_Edge_Potential_grid )
 
 ########################## Solving Schrodinger equation ##########################
 
-values, funct = mfd.finite_differences( Band_Edge_Potential_grid , mass_e_grid , diff, L )
+energ, funct = mfd.finite_differences( Band_Edge_Potential_grid , mass_e_grid , diff, L )
 
 ########################## Rename the Wavefuctions ##########################
 
@@ -91,5 +93,5 @@ waves = np.stack(lista_de_arreglos, axis=0)
 
 ########################## Poisson mod ##########################
 
-phi_elec, error_phi =  pm.poisson( phi,  )
+phi_elec, error_phi =  pm.poisson( phi, Nd_grid, dielec_grid, mass_e_grid, energ, waves   )
 
