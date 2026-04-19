@@ -2,22 +2,24 @@ import numpy as np
 from scipy.linalg import solve_banded
 
 
-def poisson(phi, Nd, T, Mass_confinament ,epsilon, eigen_energies, eigen_vectors, diff, L):
+def poisson(phi, Nd, T, Mass_confinament, Fermi ,epsilon, eigen_energies, eigen_vectors, diff, L):
     vacuum_permitivity = 8.85E-12
     m0 = 9.11E-31
     qe = 1.602E-19
     hbar = 1.054E-34
+    kB = 8.617E-5    # eV/K
 
+    kT = kB * T
     
-    constant = Mass_confinament * m0 * (qe**2) / (vacuum_permitivity * np.pi * hbar**2)
+    # Correct prefactor for 2D density of states [m^-2]
+    n2D_prefactor = (Mass_confinament * m0 * kT * qe) / (np.pi * hbar**2)
 
     m = len(epsilon)
     number_energies = len(eigen_energies)
 
-    # AQUÍ DEFINES diff_m (Conversión de Angstroms a Metros)
+    # Convert to meters
     diff_m = np.asarray(diff) * 1E-10
     Nd_m = np.asarray(Nd) * 1E6
-
 
     
  ################## Calculation of element of matrix  #####################
@@ -50,46 +52,46 @@ def poisson(phi, Nd, T, Mass_confinament ,epsilon, eigen_energies, eigen_vectors
 
 
 
-################## Calculation A and B termns  #####################
+ ################## Calculation A and B termns  #####################
 
 
     for k in range(number_energies):
-
-        n_x += fermi(eigen_energies[k], T, Fermi_eneg, constant )* eigen_vectors[:, k]**2 / L 
         
-        term_B +=  qe*n_x/vacuum_permitivity
+        arg = (Fermi - eigen_energies[k]) / kT
+        arg_clipped = np.clip(arg, -100, 100)
+        
+        n_2D_k = n2D_prefactor * np.log(1.0 + np.exp(arg_clipped))
+        
+        # Divide by diff_m to get volume density
+        n_x += n_2D_k * eigen_vectors[:, k]**2 / diff_m
+        
+        # Term for the derivative (Newton method)
+        fermi_derivative = 1.0 / (1.0 + np.exp(-arg_clipped))
+        term_B += fermi_derivative * (qe * n2D_prefactor / (vacuum_permitivity * kT))
 
     # Añadimos el a la diagonal principal
-
     Cij = np.diag(cdiag, k=0) + np.diag(cinf, k=-1) + np.diag(csup, k=1)
-
-    # Calculamos N_2D integrand Nd espacialmente
-    N_2D = np.sum(Nd_m * diff) 
 
     # Obtenemos la densidad volumétrica tridimensional real
     n_volumetrico = n_x
 
 
+ ################## Solve for small increment of electrostatic field  #####################
 
 
-################## Solve for small increment of electrostatic field  #####################
-
-
-   
-    xi = (Cij @ phi) + qe * (Nd_m - n_volumetrico) / vacuum_permitivity
+    # FIXED: Convert to eV-compatible units
+    xi = (Cij @ phi) + (Nd_m - n_volumetrico) * qe / vacuum_permitivity
     
     # Corrección de padding exigida por scipy.linalg.solve_banded
-
     upper_band = np.append(0, csup)
     lower_band = np.append(cinf, 0)
-    main_band= cdiag + constant * term_B
+    main_band = cdiag + term_B
 
     ab = np.array([upper_band, main_band, lower_band])
     delta_phi = solve_banded((1, 1), ab, -xi)
 
 
-
-################## Solve for small increment of electrostatic field  #####################
+ ################## Calculate error  #####################
 
     with np.errstate(divide='ignore', invalid='ignore'):
         # Calculamos el error relativo nodo a nodo
@@ -97,4 +99,3 @@ def poisson(phi, Nd, T, Mass_confinament ,epsilon, eigen_energies, eigen_vectors
         error = np.where(phi != 0, np.abs(delta_phi / phi), 1.0)
     
     return delta_phi, error
-    

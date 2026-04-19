@@ -33,7 +33,6 @@ structure = [ AlxGa1_xAs, GaAs, AlxGa1_xAs]
 
 #Concentration donors
 
-
 mesh_array= [0.1,0.1,0.1]  
 
 thickness = [200,100,200]
@@ -83,35 +82,66 @@ dielec_grid =                   grider.grid_propertie( dielec, 'step'  )
 phi = np.zeros_like( Band_Edge_Potential_grid )
 
 
-########################## Poisson mod ##########################
+########################## Calculate donor sheet density once ##########################
+
+# FIXED: Pre-calculate donor sheet density correctly
+Nd_array = np.array(Nd) * 1e6       # cm^-3 → m^-3
+thickness_m = np.array(thickness) * 1e-10  # Å → m
+donor_sheet_density = np.dot(Nd_array, thickness_m)  # m^-2
+
+
+########################## Poisson loop ##########################
 
 i=0
 phi = np.zeros_like( Band_Edge_Potential_grid )
 error_phi = np.ones_like( phi)
 
 
-m = 2
 
-while (np.min(error_phi)>1E-8) and (i<10): 
+while (np.max(error_phi) > 1E-8) and (i < 10): 
 
     # 1. Potencial Total
     V_total = Band_Edge_Potential_grid - phi    
     
     #  Schrödinger con el nuevo pozo
-    values, funct = mfd.finite_differences( V_total , mass_e_grid , diff, L )
+    values_meV, funct = mfd.finite_differences( V_total , mass_e_grid , diff, L )
     
-    print(f'Iteración {i:02d} | Energía del estado base es: {values[0]:.4f} meV')
+    # FIXED: Convert meV to eV
+    values_eV = values_meV / 1000.0
+    
+    print(f'Iteración {i:02d} | Energía del estado base es: {values_meV[0]:.4f} meV')
 
-    # Fermi level calculator
-    Fermi_energy, Energy_apro = flc.fermi_level_energy(   )
+    # Fermi level calculator - FIXED: pass correct arguments
+    Fermi_energy, Energy_apro = flc.fermi_level_energy( 
+        values_eV, 
+        V_total.max(), 
+        donor_sheet_density, 
+        300, 
+        GaAs.get('mass_e')  
+    )
     
-    # Poisson
-    delta_phi, error_phi = pm.poisson( phi, Nd_grid, 300, GaAs.get('mass_e') ,dielec_grid, values[0:m], funct[:,0:m], diff, L )
+    m = len(Energy_apro)
     
-    print( np.min(error_phi) )
+    # Poisson - FIXED: pass energies in eV
+    delta_phi, error_phi = pm.poisson( 
+        phi, 
+        Nd_grid, 
+        300, 
+        GaAs.get('mass_e'),
+        Fermi_energy, 
+        dielec_grid, 
+        values_eV[0:m], 
+        funct[:, 0:m], 
+        diff, 
+        L 
+    )
     
-    phi = phi + ( delta_phi)
-    i +=1
+    print(f'Error máximo: {np.max(error_phi):.6e}')
+    
+    phi = phi + delta_phi
+    i += 1
 
 if i == 10:
     print('No convergió')
+else:
+    print(f'Convergió en {i} iteraciones')
