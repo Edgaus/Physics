@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import finite_differencess_mod as mfd
 import Poisson_modified as pm
+import fermi_level_calculator as flc
 
 
 # Masses are in m0 units and energy is in eV
@@ -100,6 +101,9 @@ while (np.min(error_phi)>1E-8) and (i<10):
     values, funct = mfd.finite_differences( V_total , mass_e_grid , diff, L )
     
     print(f'Iteración {i:02d} | Energía del estado base es: {values[0]:.4f} meV')
+
+    # Fermi level calculator
+    Fermi_energy, Energy_apro = flc.fermi_level_energy(   )
     
     # Poisson
     delta_phi, error_phi = pm.poisson( phi, Nd_grid, 300, GaAs.get('mass_e') ,dielec_grid, values[0:m], funct[:,0:m], diff, L )

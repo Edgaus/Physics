@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import solve_banded
 
 
-def poisson(phi, Nd, T, Fermi_eneg, Mass_confinament ,epsilon, eigen_energies, eigen_vectors, diff, L):
+def poisson(phi, Nd, T, Mass_confinament ,epsilon, eigen_energies, eigen_vectors, diff, L):
     vacuum_permitivity = 8.85E-12
     m0 = 9.11E-31
     qe = 1.602E-19
@@ -18,14 +18,6 @@ def poisson(phi, Nd, T, Fermi_eneg, Mass_confinament ,epsilon, eigen_energies, e
     diff_m = np.asarray(diff) * 1E-10
     Nd_m = np.asarray(Nd) * 1E6
 
-################### Fermi-Dirac distribution ##############################
-
-    def fermi(E_k, T, E_fermi, const): 
-        k = 8.617E-5   
-        if T>0:
-            return const* np.log( 1+np.exp( (E_fermi- E_k)/(k*T)  )  )
-        else:
-            return const*(E_fermi-E_k)
 
     
  ################## Calculation of element of matrix  #####################
