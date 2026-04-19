@@ -2,16 +2,14 @@ import numpy as np
 from scipy.linalg import solve_banded
 
 
-# L va ser una dummy variable
-
-def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
+def poisson(phi, Nd, T, Fermi_eneg, Mass_confinament ,epsilon, eigen_energies, eigen_vectors, diff, L):
     vacuum_permitivity = 8.85E-12
     m0 = 9.11E-31
     qe = 1.602E-19
     hbar = 1.054E-34
+
     
-    
-    constant = Mass * m0 * (qe**2) / (vacuum_permitivity * np.pi * hbar**2)
+    constant = Mass_confinament * m0 * (qe**2) / (vacuum_permitivity * np.pi * hbar**2)
 
     m = len(epsilon)
     number_energies = len(eigen_energies)
@@ -20,6 +18,15 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
     diff_m = np.asarray(diff) * 1E-10
     Nd_m = np.asarray(Nd) * 1E6
 
+################### Fermi-Dirac distribution ##############################
+
+    def fermi(E_k, T, E_fermi, const): 
+        k = 8.617E-5   
+        if T>0:
+            return const* np.log( 1+np.exp( (E_fermi- E_k)/(k*T)  )  )
+        else:
+            return const*(E_fermi-E_k)
+
     
  ################## Calculation of element of matrix  #####################
     
@@ -27,7 +34,7 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
     cinf = np.zeros(m-1)
     cdiag = np.zeros(m)
     term_B = np.zeros(m)
-    eigen_concen = np.zeros(m)
+    n_x = np.zeros(m)
 
     for i in range(m - 1):
         # Diagonal superior (C_{i, i+1}): Conecta i con i+1
@@ -55,12 +62,10 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
 
 
     for k in range(number_energies):
-        psi_squared = eigen_vectors[:, k]**2
-        
 
-        eigen_concen += psi_squared / L 
+        n_x += fermi(eigen_energies[k], T, Fermi_eneg, constant )* eigen_vectors[:, k]**2 / L 
         
-        term_B += (psi_squared) / L
+        term_B +=  qe*n_x/vacuum_permitivity
 
     # Añadimos el a la diagonal principal
 
@@ -70,7 +75,7 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
     N_2D = np.sum(Nd_m * diff) 
 
     # Obtenemos la densidad volumétrica tridimensional real
-    n_volumetrico = N_2D * eigen_concen
+    n_volumetrico = n_x
 
 
 

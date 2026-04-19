@@ -87,7 +87,9 @@ phi = np.zeros_like( Band_Edge_Potential_grid )
 i=0
 phi = np.zeros_like( Band_Edge_Potential_grid )
 error_phi = np.ones_like( phi)
-m=1
+
+
+m = 2
 
 while (np.min(error_phi)>1E-8) and (i<10): 
 
@@ -96,14 +98,11 @@ while (np.min(error_phi)>1E-8) and (i<10):
     
     #  Schrödinger con el nuevo pozo
     values, funct = mfd.finite_differences( V_total , mass_e_grid , diff, L )
-
-    norm_eigen = L_matrix * funct
-
+    
     print(f'Iteración {i:02d} | Energía del estado base es: {values[0]:.4f} meV')
-
     
     # Poisson
-    delta_phi, error_phi = pm.poisson( phi, Nd_grid, dielec_grid, mass_e_grid, values[0:m], funct[:,0:m], diff, L )
+    delta_phi, error_phi = pm.poisson( phi, Nd_grid, 300, GaAs.get('mass_e') ,dielec_grid, values[0:m], funct[:,0:m], diff, L )
     
     print( np.min(error_phi) )
     
