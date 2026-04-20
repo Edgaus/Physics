@@ -1,39 +1,69 @@
 import numpy as np
 from scipy.linalg import eigh_tridiagonal
 
-def finite_differences(V_total, mass_e_grid, diff, L):
+def finite_differences(P, Mass, diff, L):
     """
-    V_total : en eV
-    mass_e_grid : en unidades de m0 (e.g. 0.067)
-    diff : en Angstroms
-    L : array de normalización (longitud efectiva del nodo) en Angstroms
+    Solves the Schrödinger equation using Finite Differences.
+    Takes 'diff' (the step sizes) directly from the Grider class!
     """
-    m = len(V_total)
+    const = 3.80998 * 2
+
+    # We get 'n' from the Potential array now, since that is our true node count
+    n = len(diff) 
+
     
-    # Factor de conversión hbar^2 / 2*m0  en unidades de [eV * Angstroms^2]
-    HBAR2_2M0 = 3.80998  
     
-    diagonal = np.zeros(m)
-    off_diagonal = np.zeros(m-1)
+
+    Asup = np.zeros(n-1)
+    Ainf = np.zeros(n-1)
+    Adiag = np.zeros(n)
+
+
+################## Calculation of element of matrix  #####################
+
+    ####### Start boundary
+    Asup[0] = -const/( (Mass[0]+Mass[1])*diff[0]*(L[0]**2)   ) 
+    Ainf[0] = -const/( (Mass[0]+Mass[1])*diff[0]*(L[1]**2)   ) 
+    Adiag[0] = -2*Asup[0] + P[0]
+
+    i = np.arange(1, n - 2)
+
     
-    # Construcción de la matriz Laplaciana 1D para la energía cinética
-    for i in range(m):
-        dx = diff[i]
-        T_term = HBAR2_2M0 / (mass_e_grid[i] * dx**2)
-        diagonal[i] = 2 * T_term + V_total[i]
-        
-    for i in range(m-1):
-        dx_avg = (diff[i] + diff[i+1]) / 2.0
-        mass_avg = (mass_e_grid[i] + mass_e_grid[i+1]) / 2.0
-        off_diagonal[i] = -HBAR2_2M0 / (mass_avg * dx_avg**2)
-        
-    # Resolver problema de eigenvalores (condiciones de frontera rígidas asintóticas en los bordes)
-    eigenvalues, eigenvectors = eigh_tridiagonal(diagonal, off_diagonal)
+    Asup[i] =  -const/( (Mass[i]+Mass[i+1])*diff[i]*(L[i]**2)   ) 
+    Ainf[i] =   -const/( (Mass[i]+Mass[1+i])*diff[i]*(L[i+1]**2)   ) 
+    Adiag[i] = -Asup[i] - Ainf[i-1] + P[i]
+
+
+    ####### End boundary
+    last = n - 2
+
+    Asup[last] = -const/( (Mass[-2]+Mass[-1])*diff[last]*(L[last]**2)   ) 
+    Ainf[last] = -const/( (Mass[-2]+Mass[-1])*diff[last]*(L[last+1]**2 )  ) 
     
-    # Normalizar funciones de onda (en unidades de 1/sqrt(Angstroms))
-    for j in range(eigenvectors.shape[1]):
-        # sum(|psi|^2 * L_node) = 1
-        norm = np.sqrt(np.sum(eigenvectors[:, j]**2 * L))
-        eigenvectors[:, j] = eigenvectors[:, j] / norm
-        
-    return eigenvalues, eigenvectors
+    Adiag[last] = -Asup[-1] - Ainf[-2] + P[-2]
+    Adiag[last+1] = -2 *Ainf[-1] + P[-1]
+
+    A = np.diag(Adiag, k=0) + np.diag(Ainf, k=-1) + np.diag(Asup, k=1)
+    
+
+    # 1. Do the broadcasting with the 1D array
+    
+    L_m = np.diag(L)
+    L_inv = np.diag(1/L)
+
+    C = L_m * A *L_inv
+    # 2. Now C is a proper 2D matrix, and np.diag will work perfectly
+    off_diag = np.diag(C, k=1)
+    main_diag = np.diag(C, k=0)
+
+    # 3. Solve
+    Eigval, Eigfun = eigh_tridiagonal(main_diag, off_diag)
+
+    sort_indices = np.argsort(Eigval)
+    Eigval = Eigval[sort_indices]
+    Eigfun = Eigfun[:, sort_indices]
+    
+    # 4. Scale to meV
+    Eigval = Eigval * 1000
+    
+    return Eigval, Eigfun

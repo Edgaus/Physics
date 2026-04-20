@@ -109,7 +109,7 @@ while (np.min(error_phi)>1E-8) and (i<10):
 
     
     # Poisson
-    delta_phi, error_phi = pfd.poisson( inf_sheet_grid, Nd_grid, dielec_grid, mass_e_grid, values[0:m], funct[:,0:m], diff, L )
+    delta_phi, error_phi = pm.poisson( inf_sheet_grid, Nd_grid, dielec_grid, mass_e_grid, values[0:m], funct[:,0:m], diff, L )
     
     print( np.min(error_phi) )
     
