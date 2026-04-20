@@ -1,55 +1,56 @@
 import numpy as np
 from scipy.optimize import brentq
 
-########## Constants
-kB = 8.617E-5        # eV/K
-m0 = 5.686e-16       # eV·s²/m²
-hbar = 6.582E-16     # eV·s 
-
-
 def fermi_level_energy(Energies, Barrier_height, donor_sheet_density, T, mas):
+
+    ####  Constants Values
+    kB = 8.617E-5        # eV/K
+    hbar = 6.582E-16     # eV·s 
+    
+    # CORRECTED m0 for m^-2 (1 eV = 1.602e-19 J. m0 = 9.109e-31 kg)
+    # m0 in eV·s²/m² = 9.109e-31 / 1.602e-19 = 5.686e-12
+    m0 = 5.686E-12       
     
     kT = kB * T 
     m_eff = m0 * mas
     
+    # 2D Density of states prefactor
     n2D = (m_eff * kT) / (np.pi * hbar**2)
     
-    number_states = 1
-    number_energy = len(Energies)
-    Fermi_level_min = Energies[0] - 10 * kT
-    Fermi_level_max = Barrier_height
-    Fermi_level = 0
+    # Define the residual function using ALL states simultaneously
+    def residual(E_F):
+        n_s = 0.0
+        for Ek in Energies:
+            arg = (E_F - Ek) / kT
+            # np.logaddexp(0, arg) safely calculates log(1 + exp(arg))
+            n_s += n2D * np.logaddexp(0, arg)
+            
+        return n_s - donor_sheet_density
+
+    # Safely bracket the root finding:
+    # Lowest possible Fermi level: Far below the ground state (e.g., 2 eV below)
+    Fermi_level_min = Energies[0] - 2.0 
     
-    donor_n_target = donor_sheet_density  # Now passed directly in m^-2
-    
-    while number_states <= number_energy:
-        E_active = Energies[:number_states]
+    # Highest possible Fermi level: Slightly above the barrier (to catch heavy doping spillover)
+    Fermi_level_max = Barrier_height + 0.5 
+
+    try:
+        # brentq will seamlessly find where residual == 0
+        Fermi_level = brentq(residual, Fermi_level_min, Fermi_level_max)
         
-        def residual(E_F):
-            n_s = 0.0
-            for Ek in E_active:
-                arg = (E_F - Ek) / kT
-                arg_clipped = np.clip(arg, -100, 100)
-                n_s += n2D * np.log(1.0 + np.exp(arg_clipped))
-            return n_s - donor_n_target
+        # Check if the Fermi Level is physically spilling over the barrier
+        if Fermi_level >= Barrier_height:
+            print("Warning: Fermi level exceeds the quantum well barrier. Electrons are spilling into 3D states.")
+            
+        return Fermi_level, Energies
         
-        try:
-            Fermi_level = brentq(residual, Fermi_level_min, Fermi_level_max)
-        except ValueError:
-            number_states += 1
-            continue
-        
-        # Check spillover
-        if Fermi_level >= Fermi_level_max - kT:
-            return Fermi_level, E_active
-        
-        # Check if we need next state
-        if number_states < len(Energies):
-            if Fermi_level > Energies[number_states]:
-                number_states += 1
-                continue
-        
-        # Converged
-        return Fermi_level, E_active
-    
-    return Fermi_level, Energies
+    except ValueError:
+        # If it still fails, it prints exactly why so you can debug your inputs
+        res_min = residual(Fermi_level_min)
+        res_max = residual(Fermi_level_max)
+        raise ValueError(
+            f"Convergence failed! The root is not bracketed.\n"
+            f"Residual at min ({Fermi_level_min:.3f} eV) = {res_min:.2e}\n"
+            f"Residual at max ({Fermi_level_max:.3f} eV) = {res_max:.2e}\n"
+            f"Check if your donor_sheet_density ({donor_sheet_density:.2e} m^-2) is physically possible for this well."
+        )

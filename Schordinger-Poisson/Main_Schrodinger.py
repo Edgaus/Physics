@@ -123,3 +123,54 @@ for i in range(3):
     
     
 
+# =====================================================================
+# SECCIÓN DE GRAFICACIÓN (Se ejecuta al terminar el loop)
+# =====================================================================
+
+plt.figure(figsize=(10, 6))
+
+# 1. Graficar el Perfil de la Banda de Conducción (V_total)
+plt.plot(x, V_total, 'k-', linewidth=2.5, label='Banda de Conducción ($E_c$)')
+
+# 2. Graficar el Nivel de Fermi
+plt.axhline(y=Fermi_energy, color='red', linestyle='--', linewidth=2, 
+            label=f'Nivel de Fermi ({Fermi_energy*1000:.1f} meV)')
+
+# 3. Graficar los niveles de energía confinados (antes/debajo de la barrera)
+barrier_height = V_total.max()
+
+# Factor de escala para que las funciones de onda se vean bien en la gráfica.
+# Si los picos se ven muy grandes o muy pequeños, ajusta este valor.
+escala_psi = 0.05 
+
+# Iterar solo sobre las energías que tu calculadora de Fermi consideró activas
+for idx, E in enumerate(Energy_apro):
+    if E < barrier_height:
+        # Graficar la línea horizontal del nivel de energía
+        plt.axhline(y=E, color='blue', linestyle='-', alpha=0.5, 
+                    label='Niveles Confinados' if idx == 0 else "")
+        
+        # Opcional: Graficar la probabilidad de la función de onda (|psi|^2)
+        # Se eleva al cuadrado, se escala y se desplaza hacia su nivel de energía (E)
+        prob_density = (energies_Func[:, idx]**2) * escala_psi + E
+        plt.plot(x, prob_density, 'blue', alpha=0.7)
+        
+        # Etiqueta de texto para cada nivel (E0, E1, E2...)
+        plt.text(x[10], E + 0.002, f'$E_{idx}$', color='blue', fontsize=12)
+
+
+
+
+# Configuración visual de la gráfica
+plt.xlabel('Posición (Å)', fontsize=12)
+plt.ylabel('Energía (eV)', fontsize=12)
+plt.title('Perfil de Bandas y Estados Confinados del Pozo Cuántico', fontsize=14)
+
+# Prevenir que "Niveles Confinados" se repita en la leyenda
+handles, labels = plt.gca().get_legend_handles_labels()
+by_label = dict(zip(labels, handles))
+plt.legend(by_label.values(), by_label.keys(), loc='best')
+
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
