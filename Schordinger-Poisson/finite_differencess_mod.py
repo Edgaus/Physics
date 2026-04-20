@@ -60,7 +60,7 @@ def finite_differences(P, Mass, diff, L):
     Eigval = Eigval[sort_indices]
     Eigfun = Eigfun[:, sort_indices]
     
-    # 4. Scale to meV
-    Eigval = Eigval * 1000
+    
+    Eigval = Eigval 
     
     return Eigval, Eigfun

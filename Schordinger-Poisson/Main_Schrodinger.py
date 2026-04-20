@@ -70,7 +70,7 @@ L[-1] =  ( diff[-1] )
 for i in range( 1, len(L)-1 ):
     L[i] = (0.5*( diff[i-1] + diff[i]  ))
 
-L_matrix = np.diag(1/L)
+
 
 ########################## Constants ##########################
 
@@ -84,7 +84,7 @@ phi = np.zeros_like( Band_Edge_Potential_grid )
 
 ########################## Calculate donor sheet density once ##########################
 
-# FIXED: Pre-calculate donor sheet density correctly
+# Donor sheet density correctly
 Nd_array = np.array(Nd) * 1e6       # cm^-3 → m^-3
 thickness_m = np.array(thickness) * 1e-10  # Å → m
 donor_sheet_density = np.dot(Nd_array, thickness_m)  # m^-2
@@ -96,52 +96,30 @@ i=0
 phi = np.zeros_like( Band_Edge_Potential_grid )
 error_phi = np.ones_like( phi)
 
-
-
-while (np.max(error_phi) > 1E-8) and (i < 10): 
+for i in range(3):
 
     # 1. Potencial Total
     V_total = Band_Edge_Potential_grid - phi    
     
     #  Schrödinger con el nuevo pozo
-    values_meV, funct = mfd.finite_differences( V_total , mass_e_grid , diff, L )
+    energies_QW, energies_Func = mfd.finite_differences( V_total , mass_e_grid , diff, L )
     
-    # FIXED: Convert meV to eV
-    values_eV = values_meV / 1000.0
+   
     
-    print(f'Iteración {i:02d} | Energía del estado base es: {values_meV[0]:.4f} meV')
+    print(f'Iteración {i:02d} | Energía del estado base es: {energies_QW[0]*1000:.4f} meV')
 
-    # Fermi level calculator - FIXED: pass correct arguments
+    # Fermi level calculator
     Fermi_energy, Energy_apro = flc.fermi_level_energy( 
-        values_eV, 
+        energies_QW, 
         V_total.max(), 
         donor_sheet_density, 
         300, 
         GaAs.get('mass_e')  
     )
     
-    m = len(Energy_apro)
     
-    # Poisson - FIXED: pass energies in eV
-    delta_phi, error_phi = pm.poisson( 
-        phi, 
-        Nd_grid, 
-        300, 
-        GaAs.get('mass_e'),
-        Fermi_energy, 
-        dielec_grid, 
-        values_eV[0:m], 
-        funct[:, 0:m], 
-        diff, 
-        L 
-    )
     
-    print(f'Error máximo: {np.max(error_phi):.6e}')
+    print(f'Nivel de Fermi: {Fermi_energy}')
     
-    phi = phi + delta_phi
-    i += 1
+    
 
-if i == 10:
-    print('No convergió')
-else:
-    print(f'Convergió en {i} iteraciones')
