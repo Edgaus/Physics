@@ -274,7 +274,7 @@ class Grider:
 
     def analytical_band_profile_zeroed(self,x_eval):
 
-        x = x_eval-200
+        x = x_eval-250
     # 1. Left Barrier (Shifted up by +0.2478)
         V_left = (0.00218 * x + 1.6134) * np.heaviside(-x, 0.5)
     

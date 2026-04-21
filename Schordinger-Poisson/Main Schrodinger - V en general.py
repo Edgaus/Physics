@@ -28,14 +28,30 @@ AlxGa1_xAs = {
         'dielectric' : 13.18-3.12*constant_x
         }
 
-structure = [ AlxGa1_xAs, GaAs, AlxGa1_xAs] 
+x_IN = 0.2
+
+AlN = { 
+        'mass_e': (0.4),
+        'Bandgap' : (6.2),
+        'dielectric' : 13.18-3.12*constant_x
+        }
+
+AlInN = { 
+        'mass_e': ( 0.4*(1-x_IN)+x_IN*0.11  ),
+        'Bandgap' : (   ),
+        'dielectric' : 13.18-3.12*constant_x
+        }
+
+
+
+structure = [ AlN, AlInN, AlN] 
 
 
 #Concentration donors
 
 
 
-thickness = [200,100,200]
+thickness = [250,100,250]
 mesh_array = [0.1,0.1,0.1]
 
 
@@ -54,8 +70,8 @@ for layer in structure:
 Band_offsset = 0.7
 
 # Convertir a array de NumPy para poder operar
-Band_Edge_Potential = np.array(Band_Edge_Potential)
-Band_Edge_Potential = (Band_Edge_Potential - Band_Edge_Potential.min()) *Band_offsset
+#Band_Edge_Potential = np.array(Band_Edge_Potential)
+#Band_Edge_Potential = (Band_Edge_Potential - Band_Edge_Potential.min()) *Band_offsset
 
 
 grider = gr.Grider( thickness, 'uniform',  mesh_array )
@@ -75,12 +91,9 @@ for i in range( 1, len(L)-1 ):
 ########################## Constants ##########################
 
 mass_e_grid =                   grider.grid_propertie( mass_e, 'step'  )
-Band_Edge_Potential_grid =      grider.grid_propertie( Band_Edge_Potential, 'step'  )
+#Band_Edge_Potential_grid =      grider.grid_propertie( Band_Edge_Potential, 'step'  )
 band_stark =                   grider.grid_propertie( [1], 'analytical_band_profile_zeroed'  )
 
-
-
-phi = np.zeros_like( Band_Edge_Potential_grid )
 
 energies_QW, energies_Func = mfd.finite_differences( band_stark , mass_e_grid , diff, L )
     
@@ -103,24 +116,14 @@ E0 = energies_QW[0]
 # Si los devuelve en filas, usa [0] o [0, :])
 psi_0 = energies_Func[:, 0]
 
-# Calcular la densidad de probabilidad |psi|^2
-prob_density = np.abs(psi_0)**2
 
-# 3. Escalar y desplazar la función de onda para la visualización
-# Ajusta este valor (ej. 0.05) si la onda se ve muy alta o muy baja
-factor_escala = 0.05 / np.max(prob_density) 
-psi_0_plot = (prob_density * factor_escala) + E0
 
 # 4. Graficar el Nivel de Energía E0
 plt.axhline(E0, color='red', linestyle='--', linewidth=1.5, label=f'Estado Base $E_0$ = {E0:.4f} eV')
 
-# 5. Graficar la Función de Onda (Densidad de Probabilidad)
-plt.plot(x, psi_0_plot, 'blue', linewidth=2, label='$|\psi_0|^2$ (Escalada)')
-# Rellenar la onda para mejor visualización
-plt.fill_between(x, E0, psi_0_plot, color='blue', alpha=0.3)
 
 # Configuraciones de la gráfica
-plt.title("Perfil de Bandas, Estado Base y Función de Onda", fontsize=14)
+plt.title("Perfil de Bandas y Estado Base", fontsize=14)
 plt.xlabel("Posición", fontsize=12) 
 plt.ylabel("Energía (eV)", fontsize=12)
 plt.legend(loc='best')
