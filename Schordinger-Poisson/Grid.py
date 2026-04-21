@@ -136,9 +136,13 @@ class Grider:
     
     def spontanuos_field_bwb(self,x_eval):  #Calculate the case of Barrier/Well/Barrier potential
 
+        vacum_permitivty = 8.85E-12 # F/C
+
         Psp_AlN = -0.081  #  C/m2
         Psp_GaN = -0.029  #  C/m2
         Psp_InN = -0.032 # C/m2
+
+        ############# AlN ###############
 
         #Parametro de Red
         a_AlN = 3.112E-10 #m
@@ -150,6 +154,9 @@ class Grider:
         #Constantes pizoelectricas
         e31_AlN = -0.58 # Cm-2
         e33_AlN = 1.55 # Cm-2
+        dielectric_AlN = 8.5 
+
+        ############# GaN ###############
 
         a_GaN = 3.189E-10 #m
          #Constantes elasticas
@@ -159,7 +166,9 @@ class Grider:
         #Constantes pizoelectricas
         e31_GaN = -0.33 # Cm-2
         e33_GaN = 0.65 # Cm-2      
+        dielectric_GaN = 8.9     
 
+        ############# InN ###############
 
         a_InN = 3.533E-10 #m
          #Constantes elasticas
@@ -169,6 +178,7 @@ class Grider:
         #Constantes pizoelectricas
         e31_InN = -0.57 # Cm-2
         e33_InN = 0.97 # Cm-2      
+        dielectric_InN = 15.3 
 
         ############################### AlGaN ######################
 
@@ -181,19 +191,67 @@ class Grider:
 
         #Constantes pizoelectricas
         e31_AlGaN = self.vegard( e31_GaN, e31_AlN, x_Al  ) # Cm-2
-        e33_AlGaN= self.vegard( e33_GaN, e33_AlN, x_Al  ) # Cm-2    
+        e33_AlGaN = self.vegard( e33_GaN, e33_AlN, x_Al  ) # Cm-2    
         
+        Psp_AlGaN = self.vegard( Psp_GaN, Psp_AlN, x_Al )
 
 
+        ############################### AlInN ######################
+
+        x_In = 0.2
+
+        a_AlInN = self.vegard( a_AlN, a_InN, x_In  ) #m
+         #Constantes elasticas
+        C13_AlInN = self.vegard( C13_AlN, C13_InN, x_In  ) #+- 7GPa 
+        C33_AlInN = self.vegard( C33_AlN, C33_InN, x_In  )#+- 6GPa
+
+        #Constantes pizoelectricas
+        e31_AlInN = self.vegard( e31_AlN, e31_InN, x_In  ) # Cm-2
+        e33_AlInN = self.vegard( e33_AlN, e33_InN, x_In  ) # Cm-2
+
+        Psp_AlInN = self.vegard( Psp_AlN, Psp_InN, x_In )    
+
+        # La densidad de carga per sheet viene dado al final como
 
 
+        a_barrier = a_AlGaN
+        a_well = a_GaN 
+
+        C13_well = C13_GaN
+        C33_well = C33_GaN
+
+        e31_well = e31_GaN
+        e33_well = e33_GaN
+
+        Psp_well = Psp_AlGaN
+        Psp_barrier = Psp_GaN
+
+        strain = (a_barrier - a_well)/a_well
+
+        sigma = abs(               
+            2*strain* (   e31_well -  e33_well*( C13_well  / C33_well )      ) + Psp_well - Psp_barrier
+             )
 
 
+        Electric_field = sigma/(vacum_permitivty*dielectric_AlN)
+        print( Electric_field )
 
 
+        lw = 20E-10
+        lb = 40E-10
+        epsilon = vacum_permitivty*dielectric_AlN
+        
+        strain_biaxial = ( a_AlGaN-a_GaN  )/a_AlGaN
+
+        Pw = 2*strain_biaxial*(  e31_GaN - e33_GaN*( C13_GaN/C33_GaN  )      )
+
+        print(Pw)
 
 
+        Pb = 2*strain_biaxial*(  e31_GaN - e33_GaN*( C13_GaN/C33_GaN  )      )
 
+        Fb = (Pw-Pb)*lw/(vacum_permitivty*epsilon*(lw+lb))
+        Fw = 2*(Pb-Pw)*lb/(vacum_permitivty*epsilon*(lw+lb))
 
 
 
@@ -208,11 +266,28 @@ class Grider:
         right_barrier = np.heaviside(x_eval - self.bounds[2], 0.5) - np.heaviside(x_eval - self.bounds[3], 0.5)
         
         # Total Field F(x)
-        F = self.F_b * (left_barrier + right_barrier) + self.F_w * well
+        F_z = left_barrier*Fb*x_eval +  well * (Fb*self.bounds[1] + Fw * x_eval) + right_barrier* (Fb*self.bounds[1] + Fw * self.bounds[2] + Fb * x_eval)
 
-        return F
-             
-        
+        return F_z
+
+
+
+    def analytical_band_profile_zeroed(self,x_eval):
+
+        x = x_eval-200
+    # 1. Left Barrier (Shifted up by +0.2478)
+        V_left = (0.00218 * x + 1.6134) * np.heaviside(-x, 0.5)
+    
+    # 2. Quantum Well (Shifted up by +0.2478, intercept becomes 0)
+        V_well = (-0.03960 * x) * (np.heaviside(x, 0.5) - np.heaviside(x - 100, 0.5))
+    
+    # 3. Right Barrier (Shifted up by +0.2478)
+        V_right = (0.00253 * (x - 100) - 2.4931) * np.heaviside(x - 100, 0.5)
+    
+    # Total analytical potential
+        V_total = V_left + V_well + V_right
+        return V_total
+  
 
 ############################## Code for propertie_grid ###################################  
 
@@ -237,6 +312,6 @@ class Grider:
             y = self.inf_sheet_potential(x) 
             return y
         
-        if self.type_propertie == 'spontanuos_field_bwb':
-            y = self.spontanuos_field_bwb(x) 
+        if self.type_propertie == 'analytical_band_profile_zeroed':
+            y = self.analytical_band_profile_zeroed(x) 
             return y
