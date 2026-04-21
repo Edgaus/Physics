@@ -101,7 +101,11 @@ class Grider:
                 [3, 32.0]    # 96 Å (Deep in the right barrier)
                 ]
         return mesh_array
+    
+############################## Funciones utiles extras
 
+    def vegard(self, Initial, Final, x, bowing=0):
+        return (1 - x) * Initial + x * Final - bowing * x * (1 - x)
 
 
 ############################## Function of Properties ###################################  
@@ -127,9 +131,71 @@ class Grider:
         y_eval = np.abs( x_eval - start_layer )*( sigma )
         return y_eval 
     
+
+
+    
     def spontanuos_field_bwb(self,x_eval):  #Calculate the case of Barrier/Well/Barrier potential
 
+        Psp_AlN = -0.081  #  C/m2
+        Psp_GaN = -0.029  #  C/m2
+        Psp_InN = -0.032 # C/m2
+
+        #Parametro de Red
+        a_AlN = 3.112E-10 #m
+
+        #Constantes elasticas
+        C13_AlN = 99 #+- 4GPa
+        C33_AlN = 398 # +-10GPa
+
+        #Constantes pizoelectricas
+        e31_AlN = -0.58 # Cm-2
+        e33_AlN = 1.55 # Cm-2
+
+        a_GaN = 3.189E-10 #m
+         #Constantes elasticas
+        C13_GaN = 106 #+- 20GPa 
+        C33_GaN = 398 #+- 20GPa
+
+        #Constantes pizoelectricas
+        e31_GaN = -0.33 # Cm-2
+        e33_GaN = 0.65 # Cm-2      
+
+
+        a_InN = 3.533E-10 #m
+         #Constantes elasticas
+        C13_InN = 121 #+- 7GPa 
+        C33_InN = 182 #+- 6GPa
+
+        #Constantes pizoelectricas
+        e31_InN = -0.57 # Cm-2
+        e33_InN = 0.97 # Cm-2      
+
+        ############################### AlGaN ######################
+
+        x_Al = 0.3
+
+        a_AlGaN = self.vegard( a_GaN, a_AlN, x_Al  ) #m
+         #Constantes elasticas
+        C13_AlGaN = self.vegard( C13_GaN, C13_AlN, x_Al  ) #+- 7GPa 
+        C33_AlGaN = self.vegard( C33_GaN, C33_AlN, x_Al  )#+- 6GPa
+
+        #Constantes pizoelectricas
+        e31_AlGaN = self.vegard( e31_GaN, e31_AlN, x_Al  ) # Cm-2
+        e33_AlGaN= self.vegard( e33_GaN, e33_AlN, x_Al  ) # Cm-2    
         
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         # Left Barrier: active from bounds[0] to bounds[1]
@@ -171,6 +237,6 @@ class Grider:
             y = self.inf_sheet_potential(x) 
             return y
         
-        if self.type_propertie == 'inf_sheet_potential':
-            y = self.inf_sheet_potential(x) 
+        if self.type_propertie == 'spontanuos_field_bwb':
+            y = self.spontanuos_field_bwb(x) 
             return y
