@@ -109,12 +109,9 @@ plt.plot(x, band_stark, 'k-', linewidth=2.5, label='Banda de Conducción ($E_c$)
 
 # 2. Extraer los datos del estado base (Ground State)
 # Asumiendo que energies_QW está ordenado de menor a mayor energía
-E0 = energies_QW[0]
+E0 = energies_QW[2]
 
-# Extraer la función de onda correspondiente.
-# (Nota: Si tu módulo mfd devuelve los eigenvectores en columnas, usa [:, 0]. 
-# Si los devuelve en filas, usa [0] o [0, :])
-psi_0 = energies_Func[:, 0]
+
 
 
 
