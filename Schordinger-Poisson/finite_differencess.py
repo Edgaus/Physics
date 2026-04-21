@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import eig
 
-def finite_differences(P, Mass, diff):
+def finite_differences(P, Mass, diff, L):
     """
     Solves the Schrödinger equation using Finite Differences.
     Takes 'diff' (the step sizes) directly from the Grider class!
@@ -11,12 +11,7 @@ def finite_differences(P, Mass, diff):
     # We get 'n' from the Potential array now, since that is our true node count
     n = len(diff) 
 
-    L = np.zeros(n)
-    L[0] =  ( diff[0] )
-    L[-1] =  ( diff[-1] )
-    for i in range( 1,n-1):
-        L[i] = (0.5*( diff[i-1] + diff[i]  ))
-    
+
 
     Asup = np.zeros(n-1)
     Ainf = np.zeros(n-1)

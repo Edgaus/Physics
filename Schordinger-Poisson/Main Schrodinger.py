@@ -65,10 +65,10 @@ grider = gr.Grider( thickness, 'uniform',  mesh_array )
 x, diff =    grider.grid_axis()
 
 L = np.zeros_like(diff)
-L[0] =  ( diff[0] ) 
-L[-1] =  ( diff[-1] )
+L[0] =  np.sqrt( diff[0] ) 
+L[-1] =  np.sqrt( diff[-1] )
 for i in range( 1, len(L)-1 ):
-    L[i] = (0.5*( diff[i-1] + diff[i]  ))
+    L[i] = np.sqrt(0.5*( diff[i-1] + diff[i]  ))
 
 
 
@@ -95,13 +95,13 @@ donor_sheet_density = np.dot(Nd_array, thickness_m)  # m^-2
 phi = np.zeros_like( Band_Edge_Potential_grid )
 error_phi = np.ones_like( phi)
 
-for i in range(3):
+for i in range(1):
 
     # 1. Potencial Total
     V_total = Band_Edge_Potential_grid - phi    
     
     #  Schrödinger con el nuevo pozo
-    energies_QW, energies_Func = mfd.finite_differences( V_total , mass_e_grid , diff, L )
+    energies_QW, energies_Func = mfd.finite_differences_mod( V_total , mass_e_grid , diff, L , x)
     
    
     
@@ -116,12 +116,11 @@ for i in range(3):
         GaAs.get('mass_e')  
     )
     
-    delta_phi, error_phi = pm.poisson(  )
+    #################  Poisson ############# delta_phi, error_phi = pm.poisson(  )
 
     phi = phi
     
-    print(f'Nivel de Fermi: {Fermi_energy}')
-    
+
     
 
 # =====================================================================
@@ -131,7 +130,7 @@ for i in range(3):
 plt.figure(figsize=(10, 6))
 
 # 1. Graficar el Perfil de la Banda de Conducción (V_total)
-plt.plot(x, V_total, 'k-', linewidth=2.5, label='Banda de Conducción ($E_c$)')
+plt.plot(x, V_total, x, energies_Func[:,0], 'k-', linewidth=2.5, label='Banda de Conducción ($E_c$)')
 
 # 2. Graficar el Nivel de Fermi
 plt.axhline(y=Fermi_energy, color='red', linestyle='--', linewidth=2, 

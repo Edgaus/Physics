@@ -1,19 +1,19 @@
 import numpy as np
 from scipy.linalg import solve_banded
 
-def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
+def poisson(phi, Nd, epsilon, Mass,    Fermi_E,      eigen_energies, eigen_vectors, diff, L, x):
     vacuum_permitivity = 8.85E-12
-    m0 = 9.11E-31
+    m0 = 9.11E-31  #kg
     qe = 1.602E-19
-    hbar = 1.054E-34
-    
-    
+    hbar = 1.054E-34  # 
+    kB_SI = 1.054E-23 # JK-1
+   
     constant = Mass * m0 * (qe**2) / (vacuum_permitivity * np.pi * hbar**2)
 
     m = len(epsilon)
     number_energies = len(eigen_energies)
 
-    # AQUÍ DEFINES diff_m (Conversión de Angstroms a Metros)
+    # Conversión de Angstroms a Metro
     diff_m = np.asarray(diff) * 1E-10
     Nd_m = np.asarray(Nd) * 1E6
 
@@ -46,15 +46,32 @@ def poisson(phi, Nd, epsilon, Mass, eigen_energies, eigen_vectors, diff, L):
     cdiag[0] = -2 * csup[0]
     cdiag[-1] = -2 * cinf[-1]
 
-    # Calculate Probability and Jacobian Term B
+
+
+
+############################### Calculo de Probabilidad #############################
     for k in range(number_energies):
-        psi_squared = eigen_vectors[:, k]**2
+        psi_squared = (eigen_vectors[:, k]/L)**2
         
+
+# Method A: Direct summation (if dx is uniform)
+        dx = diff[1]
+        integral_sum = np.sum(psi_squared) * dx
+
+# Method B: Trapezoidal rule (better for non-uniform grids or higher accuracy)
+        integral_trapz = np.trapz(psi_squared, x)
+
+        print(f"Normalization (Sum): {integral_sum}")
+        print(f"Normalization (Trapz): {integral_trapz}")
+
+
         # eigen_concen es la probabilidad espacial real (1/m)
-        eigen_concen += psi_squared / L 
+        eigen_concen += 
         
         # term_B es el Jacobiano para la diagonal (1/m^2)
-        term_B += (psi_squared) / L
+        term_B += 
+
+
 
     # Añadimos el Jacobiano a la diagonal principal
     main_band= cdiag + constant * term_B

@@ -282,7 +282,7 @@ class Grider:
         # Bandgaps 
         Eg_pozo = 4.0    
         Eg_barrera = 6.2 
-
+        
         def E_conduccion(z):
             if z < 0:
                 return Fb * z + Vb
