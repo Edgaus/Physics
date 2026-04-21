@@ -92,7 +92,6 @@ donor_sheet_density = np.dot(Nd_array, thickness_m)  # m^-2
 
 ########################## Poisson loop ##########################
 
-i=0
 phi = np.zeros_like( Band_Edge_Potential_grid )
 error_phi = np.ones_like( phi)
 
@@ -117,7 +116,9 @@ for i in range(3):
         GaAs.get('mass_e')  
     )
     
-    
+    delta_phi, error_phi = pm.poisson(  )
+
+    phi = phi
     
     print(f'Nivel de Fermi: {Fermi_energy}')
     

@@ -126,16 +126,36 @@ class Grider:
 
         y_eval = np.abs( x_eval - start_layer )*( sigma )
         return y_eval 
+    
+    def spontanuos_field_bwb(self,x_eval):  #Calculate the case of Barrier/Well/Barrier potential
+
+        
+
+
+        # Left Barrier: active from bounds[0] to bounds[1]
+        left_barrier = np.heaviside(x_eval - self.bounds[0], 0.5) - np.heaviside(x_eval - self.bounds[1], 0.5)
+        
+        # Central Well: active from bounds[1] to bounds[2]
+        well = np.heaviside(x_eval - self.bounds[1], 0.5) - np.heaviside(x_eval - self.bounds[2], 0.5)
+        
+        # Right Barrier: active from bounds[2] to bounds[3]
+        right_barrier = np.heaviside(x_eval - self.bounds[2], 0.5) - np.heaviside(x_eval - self.bounds[3], 0.5)
+        
+        # Total Field F(x)
+        F = self.F_b * (left_barrier + right_barrier) + self.F_w * well
+
+        return F
              
         
 
 ############################## Code for propertie_grid ###################################  
 
 
-    def grid_propertie( self, propertie_array = None, type_propertie = 'step'  ):
+    def grid_propertie( self, propertie_array = None, type_propertie = 'step', constants_properties = None  ):
 
         self.type_propertie = type_propertie
         self.propertie = np.asarray(propertie_array)
+        self.constants_properties = np.asanyarray(constants_properties)
 
         if self.x_grid is None or self.dx is None:
             x, h = self.grid_axis()
@@ -147,6 +167,10 @@ class Grider:
             y = self.Heaviside(x)
             return y
             
+        if self.type_propertie == 'inf_sheet_potential':
+            y = self.inf_sheet_potential(x) 
+            return y
+        
         if self.type_propertie == 'inf_sheet_potential':
             y = self.inf_sheet_potential(x) 
             return y
