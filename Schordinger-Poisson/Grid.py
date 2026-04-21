@@ -274,20 +274,40 @@ class Grider:
 
     def analytical_band_profile_zeroed(self,x_eval):
 
-        x = x_eval-250
-    # 1. Left Barrier (Shifted up by +0.2478)
-        V_left = (0.00218 * x + 1.6134) * np.heaviside(-x, 0.5)
-    
-    # 2. Quantum Well (Shifted up by +0.2478, intercept becomes 0)
-        V_well = (-0.03960 * x) * (np.heaviside(x, 0.5) - np.heaviside(x - 100, 0.5))
-    
-    # 3. Right Barrier (Shifted up by +0.2478)
-        V_right = (0.00253 * (x - 100) - 2.4931) * np.heaviside(x - 100, 0.5)
-    
-    # Total analytical potential
-        V_total = V_left + V_well + V_right
-        return V_total
-  
+        lw = 100.0       
+        Vb = 1.54       
+        Fw = -3.90 * 0.01 
+        Fb = 0.334 * 0.01 
+
+        # Bandgaps 
+        Eg_pozo = 4.0    
+        Eg_barrera = 6.2 
+
+        def E_conduccion(z):
+            if z < 0:
+                return Fb * z + Vb
+            elif 0 <= z <= lw:
+                return Fw * z
+            else:
+                return Fb * (z - lw) + Fw * lw + Vb
+
+        def Bandgap(z):
+            if 0 <= z <= lw:
+                return Eg_pozo
+            else:
+                return Eg_barrera
+
+        def E_valencia(z):
+            return E_conduccion(z) - Bandgap(z)
+
+        Ec_vec = np.vectorize(E_conduccion)
+        Ev_vec = np.vectorize(E_valencia)
+
+        
+        return Ec_vec(x_eval-250), Ev_vec(x_eval-250)
+        
+
+
 
 ############################## Code for propertie_grid ###################################  
 

@@ -29,20 +29,21 @@ AlxGa1_xAs = {
         }
 
 x_IN = 0.2
+bowing_AlInN = 6
 
 AlN = { 
         'mass_e': (0.4),
+        'mass_hh': (3.53),
         'Bandgap' : (6.2),
         'dielectric' : 13.18-3.12*constant_x
         }
 
 AlInN = { 
         'mass_e': ( 0.4*(1-x_IN)+x_IN*0.11  ),
-        'Bandgap' : (   ),
+        'mass_hh': ( 3.53*(1-x_IN)+x_IN*1.63  ),
+        'Bandgap' : (  6.2*(1-x_IN) + x_IN -bowing_AlInN*x_IN*(1-x_IN) ),
         'dielectric' : 13.18-3.12*constant_x
         }
-
-
 
 structure = [ AlN, AlInN, AlN] 
 
@@ -60,10 +61,12 @@ mesh_array = [0.1,0.1,0.1]
 Band_Edge_Potential = []
 mass_e = []
 dielec = []
+mass_hh = []
 
 for layer in structure:
     Band_Edge_Potential.append( layer.get('Bandgap')  )
     mass_e.append( layer.get('mass_e') )
+    mass_hh.append( layer.get('mass_hh') )
     dielec.append( layer.get('dielectric') )
 
 
@@ -91,11 +94,13 @@ for i in range( 1, len(L)-1 ):
 ########################## Constants ##########################
 
 mass_e_grid =                   grider.grid_propertie( mass_e, 'step'  )
+mass_hh_grid =                  grider.grid_propertie( mass_hh, 'step'  )
 #Band_Edge_Potential_grid =      grider.grid_propertie( Band_Edge_Potential, 'step'  )
-band_stark =                   grider.grid_propertie( [1], 'analytical_band_profile_zeroed'  )
+band_stark_c, band_stark_v =                   grider.grid_propertie( [1], 'analytical_band_profile_zeroed'  )
 
 
-energies_QW, energies_Func = mfd.finite_differences( band_stark , mass_e_grid , diff, L )
+energies_QW_c, energies_Func_c = mfd.finite_differences( band_stark_c , mass_e_grid , diff, L )
+energies_QW_v, energies_Func_v = mfd.finite_differences( -(band_stark_v + 4) , mass_hh_grid , diff, L )
     
 
 # =====================================================================
@@ -104,23 +109,34 @@ energies_QW, energies_Func = mfd.finite_differences( band_stark , mass_e_grid , 
 
 plt.figure(figsize=(10, 6))
 
-# 1. Graficar el Perfil de la Banda de Conducción
-plt.plot(x, band_stark, 'k-', linewidth=2.5, label='Banda de Conducción ($E_c$)')
+# 1. Extraer los datos del estado base (Ground State)
+E0c = energies_QW_c[0]
+EOv = -energies_QW_v[0] - 4  # Ajuste inverso del potencial para la VB
 
-# 2. Extraer los datos del estado base (Ground State)
-# Asumiendo que energies_QW está ordenado de menor a mayor energía
-E0 = energies_QW[2]
+# Calcular la diferencia de energía (Transición óptica fundamental)
+delta_E = E0c - EOv
 
+# 2. Graficar el Perfil de ambas Bandas
+# Asegúrate de pasar 'band_stark_c' para la CB y 'band_stark_v' para la VB
+plt.plot(x, band_stark_c, 'k-', linewidth=2.5, label='Banda de Conducción ($E_c$)')
+plt.plot(x, band_stark_v, 'gray', linewidth=2.5, label='Banda de Valencia ($E_v$)')
 
+# 3. Graficar los Niveles de Energía E0c y E0v
+plt.axhline(E0c, color='blue', linestyle='--', linewidth=1.5, label=f'$E_{{c0}}$ (Electrón) = {E0c:.4f} eV')
+plt.axhline(EOv, color='red', linestyle='--', linewidth=1.5, label=f'$E_{{v0}}$ (Hueco) = {EOv:.4f} eV')
 
+# 4. Señalar la diferencia de energía (Delta E) con una flecha
+x_center = np.mean(x*1.4) # Posicionar la flecha en el centro del eje x
+plt.annotate('', xy=(x_center, E0c), xytext=(x_center, EOv),
+             arrowprops=dict(arrowstyle='<->', color='green', lw=2))
 
+# Agregar el texto del valor de Delta E justo al lado de la flecha
+plt.text(x_center + (x.max() - x.min()) * 0.02, (E0c + EOv) / 2, 
+         f'$\Delta E$ = {delta_E:.4f} eV', 
+         color='green', fontsize=12, va='center', fontweight='bold')
 
-# 4. Graficar el Nivel de Energía E0
-plt.axhline(E0, color='red', linestyle='--', linewidth=1.5, label=f'Estado Base $E_0$ = {E0:.4f} eV')
-
-
-# Configuraciones de la gráfica
-plt.title("Perfil de Bandas y Estado Base", fontsize=14)
+# 5. Configuraciones de la gráfica
+plt.title("Perfil de Bandas, Estados Base y Transición Óptica", fontsize=14)
 plt.xlabel("Posición", fontsize=12) 
 plt.ylabel("Energía (eV)", fontsize=12)
 plt.legend(loc='best')
