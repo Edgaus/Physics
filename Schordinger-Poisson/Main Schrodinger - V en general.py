@@ -169,45 +169,53 @@ calculate_optical_transitions(
 
 
     
-
 # =====================================================================
-# SECCIÓN DE GRAFICACIÓN (Se ejecuta al terminar el loop)
+# SECCIÓN DE GRAFICACIÓN (Actualizada para incluir funciones de onda)
 # =====================================================================
 
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(10, 7))
 
-# 1. Extraer los datos del estado base (Ground State)
+# 1. Extraer los datos del estado base
 E0c = energies_QW_c[0]
-EOv = -energies_QW_v[0] - 4  # Ajuste inverso del potencial para la VB
+E0v = -energies_QW_v[0] - 4 
 
-# Calcular la diferencia de energía (Transición óptica fundamental)
-delta_E = E0c - EOv
+# 2. Extraer y Normalizar funciones de onda (Ground State)
+# Tomamos la columna 0. Multiplicamos por un factor (ej. 0.5) para que la amplitud se vea bien en la escala de eV
+psi_c0 = energies_Func_c[:, 0]
+psi_v0 = energies_Func_v[:, 0]
 
-# 2. Graficar el Perfil de ambas Bandas
-# Asegúrate de pasar 'band_stark_c' para la CB y 'band_stark_v' para la VB
-plt.plot(x, band_stark_c, 'k-', linewidth=2.5, label='Banda de Conducción ($E_c$)')
-plt.plot(x, band_stark_v, 'gray', linewidth=2.5, label='Banda de Valencia ($E_v$)')
+# Normalización rápida para visualización: sum(|psi|^2 * dx) = 1
+norm_c = np.sqrt(np.trapz(np.abs(psi_c0)**2, x))
+norm_v = np.sqrt(np.trapz(np.abs(psi_v0)**2, x))
 
-# 3. Graficar los Niveles de Energía E0c y E0v
-plt.axhline(E0c, color='blue', linestyle='--', linewidth=1.5, label=f'$E_{{c0}}$ (Electrón) = {E0c:.4f} eV')
-plt.axhline(EOv, color='red', linestyle='--', linewidth=1.5, label=f'$E_{{v0}}$ (Hueco) = {EOv:.4f} eV')
+psi_c0_plot = (psi_c0 / norm_c) * 0.3  # El 0.3 es un factor de escala visual
+psi_v0_plot = (psi_v0 / norm_v) * 0.3
 
-# 4. Señalar la diferencia de energía (Delta E) con una flecha
-x_center = np.mean(x*1.4) # Posicionar la flecha en el centro del eje x
-plt.annotate('', xy=(x_center, E0c), xytext=(x_center, EOv),
-             arrowprops=dict(arrowstyle='<->', color='green', lw=2))
+# Nota la 'r' antes de las comillas en el label
+plt.plot(x, E0c + psi_c0_plot, 'blue', linewidth=1.5, label=r'$\psi_{e0}$ (Estado base)')
+plt.fill_between(x, E0c, E0c + psi_c0_plot, color='blue', alpha=0.2)
 
-# Agregar el texto del valor de Delta E justo al lado de la flecha
-plt.text(x_center + (x.max() - x.min()) * 0.02, (E0c + EOv) / 2, 
-         f'= {delta_E:.4f} eV', 
-         color='green', fontsize=12, va='center', fontweight='bold')
+plt.plot(x, E0v - psi_v0_plot, 'red', linewidth=1.5, label=r'$\psi_{h0}$ (Estado base)')
+plt.fill_between(x, E0v, E0v - psi_v0_plot, color='red', alpha=0.2)
 
-# 5. Configuraciones de la gráfica
-plt.title("Perfil de Bandas, Estados Base y Transición Óptica", fontsize=14)
-plt.xlabel("Posición", fontsize=12) 
+# 4. Graficar Funciones de Onda desplazadas a su nivel de energía
+# Graficamos E_nivel + Psi para que "floten" en su nivel
+plt.plot(x, E0c + psi_c0_plot, 'blue', linewidth=1.5, label='$\psi_{e0}$ (Estado base)')
+plt.fill_between(x, E0c, E0c + psi_c0_plot, color='blue', alpha=0.2) # Relleno opcional
+
+plt.plot(x, E0v - psi_v0_plot, 'red', linewidth=1.5, label='$\psi_{h0}$ (Estado base)')
+plt.fill_between(x, E0v, E0v - psi_v0_plot, color='red', alpha=0.2)
+
+# 5. Líneas de niveles de energía
+plt.axhline(E0c, color='blue', linestyle='--', alpha=0.5)
+plt.axhline(E0v, color='red', linestyle='--', alpha=0.5)
+
+# 6. Etiquetas y formato
+plt.title("Estructura de Bandas y Funciones de Onda del Estado Base", fontsize=14)
+plt.xlabel("Posición (nm o unidades de grid)", fontsize=12)
 plt.ylabel("Energía (eV)", fontsize=12)
-plt.legend(loc='best')
-plt.grid(True, alpha=0.3)
+plt.legend(loc='upper right', fontsize='small', ncol=2)
+plt.grid(True, alpha=0.2)
 plt.tight_layout()
 
 plt.show()

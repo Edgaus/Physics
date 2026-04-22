@@ -118,7 +118,7 @@ for i in range(1):
     
     #################  Poisson ############# delta_phi, error_phi = pm.poisson(  )
 
-    phi = phi
+ 
     
 
     

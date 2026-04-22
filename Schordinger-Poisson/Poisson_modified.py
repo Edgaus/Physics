@@ -50,6 +50,8 @@ def poisson(phi, Nd, epsilon, Mass,    Fermi_E,      eigen_energies, eigen_vecto
 
 
 ############################### Calculo de Probabilidad #############################
+
+
     for k in range(number_energies):
         psi_squared = (eigen_vectors[:, k]/L)**2
         
