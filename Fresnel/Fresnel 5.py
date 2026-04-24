@@ -13,7 +13,7 @@ import os     # NUEVO: Para las rutas del .exe
 import sys    # NUEVO: Para las rutas del .exe
 
 # --- Constants ---
-MATERIALS = ["Air", "AlSb" ,  "Al49Ga51As","AlN (cubico)", "AlN Film" ,"AlN (hexagonal)", "GaN (hexagonal)", "GaAs","GaN (cubico)","InGaN (cubico) 10% San_Luis", "MgO", "Si" ,"SiC" ,"SiO2", "TiN","Pet" ]
+MATERIALS = ["Air", "AlSb" ,  "Al49Ga51As","AlN (cubico)", "AlN Film" ,"AlN (hexagonal)","AlN2", "GaN (hexagonal)", "GaAs","GaN (cubico)","InGaN (cubico) 10% San_Luis", "MgO", "Si", "Si2" ,"SiC" ,"SiO2", "TiN","Pet" ]
 
 # ================= CUSTOM VECTOR BUTTONS =================
 
