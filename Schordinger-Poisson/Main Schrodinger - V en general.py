@@ -3,7 +3,7 @@ import Grid as gr
 from matplotlib import pyplot as plt
 import numpy as np
 import finite_differencess_mod as mfd
-import Poisson_modified as pm
+#import Poisson_modified as pm
 import fermi_level_calculator as flc
 
 
@@ -99,70 +99,9 @@ mass_hh_grid =                  grider.grid_propertie( mass_hh, 'step'  )
 band_stark_c, band_stark_v =                   grider.grid_propertie( [1], 'analytical_band_profile_zeroed'  )
 
 
-energies_QW_c, energies_Func_c = mfd.finite_differences( band_stark_c , mass_e_grid , diff, L )
-energies_QW_v, energies_Func_v = mfd.finite_differences( -(band_stark_v + 4) , mass_hh_grid , diff, L )
+energies_QW_c, energies_Func_c = mfd.finite_differences_mod( band_stark_c , mass_e_grid , diff, L )
+energies_QW_v, energies_Func_v = mfd.finite_differences_mod( -(band_stark_v + 4) , mass_hh_grid , diff, L )
     
-# =====================================================================
-# SECCIÓN DE ANÁLISIS DE TRANSICIONES ÓPTICAS (CORREGIDO)
-# =====================================================================
-
-def calculate_optical_transitions(E_c, E_v, Psi_c, Psi_v, diff_array, num_states=3, E_exciton_eV=0.035):
-    print(f"\n--- Análisis de Transiciones Ópticas ---")
-    print(f"(Asumiendo energía de ligadura del excitón = {E_exciton_eV*1000} meV)\n")
-    
-    print(f"{'Transición':<12} | {'Energía (eV)':<15} | {'Intensidad Relativa (|Overlap|^2)':<35}")
-    print("-" * 65)
-
-    for i in range(num_states):
-        for j in range(num_states):
-            
-            # 1. Energía de Transición
-            energia_transicion = E_c[i] - E_v[j] - E_exciton_eV
-            
-            # 2. Extraer funciones de onda
-            psi_e = Psi_c[:, i]
-            psi_h = Psi_v[:, j]
-            
-            # Asegurar que las funciones de onda estén normalizadas (sum(|psi|^2 * dx) = 1)
-            norm_e = np.sqrt(np.sum(np.abs(psi_e)**2 * diff_array))
-            norm_h = np.sqrt(np.sum(np.abs(psi_h)**2 * diff_array))
-            psi_e_norm = psi_e / norm_e
-            psi_h_norm = psi_h / norm_h
-            
-            # 3. Integral de Solapamiento (Overlap) con las funciones normalizadas
-            overlap = np.sum(psi_e_norm * psi_h_norm * diff_array)
-            intensidad = np.abs(overlap)**2
-            
-            # Quitamos el condicional para que imprima ABSOLUTAMENTE TODO
-            etiqueta = f"e{i+1} - h{j+1}"
-            
-            # Si la intensidad es muy baja, lo indicamos visualmente
-            if intensidad < 0.0001:
-                print(f"{etiqueta:<12} | {energia_transicion:<15.4f} | {intensidad:<15.2e} (Casi prohibida por QCSE)")
-            else:
-                print(f"{etiqueta:<12} | {energia_transicion:<15.4f} | {intensidad:<15.4f}")
-
-# Ejecución (asegúrate de que esta parte siga igual en tu código)
-niveles_energia_v_absolutos = -energies_QW_v - 4 
-
-calculate_optical_transitions(
-    E_c = energies_QW_c, 
-    E_v = niveles_energia_v_absolutos, 
-    Psi_c = energies_Func_c, 
-    Psi_v = energies_Func_v, 
-    diff_array = diff,
-    num_states = 3,
-    E_exciton_eV = 0.035
-)
-
-
-
-
-
-
-
-
-
 
 
 
