@@ -1,7 +1,0 @@
-https://journals.aps.org/prb/pdf/10.1103/PhysRevB.60.8849
-
-https://journals.aps.org/prb/pdf/10.1103/PhysRevB.60.8849
-
-Distinguir entre las componentes de transmisión y refleccion de electrones en la imagen RHEED la transición en la superficie puede ser obervada. 
-
-Se recomienda no exponer la superficie del c-AlN a nitrógeno ya que favorece un crecimiento hexagonal. Un forma de prever esto es con el modelo de crecimiento Schormann (J. Sch¨ormann, S. Potthast, D.J. As, K. Lischka, Appl. Phys. Lett. 90 (2007) 041918). Un elemento importante del modelo es la diferencia de la intensidad de refleccion del patron RHEED entre la superficie de c-AlN y de Al. RHEED (01) reflección. 

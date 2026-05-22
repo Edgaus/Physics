@@ -1,8 +1,0 @@
-pyproject.toml
-setup.py
-fresnelmtx/__init__.py
-fresnelmtx/fresnelmtx.ctf
-fresnelmtx_R2024b.egg-info/PKG-INFO
-fresnelmtx_R2024b.egg-info/SOURCES.txt
-fresnelmtx_R2024b.egg-info/dependency_links.txt
-fresnelmtx_R2024b.egg-info/top_level.txt
