@@ -1,8 +1,8 @@
 {
     "sim_vars": {
         "lambda_start": 400.0,
-        "lambda_end": 800.0,
-        "theta_inc": 22.0,
+        "lambda_end": 820.0,
+        "theta_inc": 15.0,
         "polarization": "Mixed"
     },
     "opt_vars": {
@@ -10,7 +10,7 @@
         "opt_target": "hybrid",
         "opt_method": "differential_evolution",
         "opt_lam_start": 390.0,
-        "opt_lam_end": 800.0
+        "opt_lam_end": 823.0
     },
     "layers": [
         {
@@ -21,14 +21,14 @@
         },
         {
             "material": "GaN (cubico) v2",
-            "thickness": 440.0,
-            "bound_thickness": 10.0,
+            "thickness": 375.0,
+            "bound_thickness": 20.0,
             "fixed": false
         },
         {
             "material": "SiC",
-            "thickness": 1530.0,
-            "bound_thickness": 30.0,
+            "thickness": 1510.0,
+            "bound_thickness": 40.0,
             "fixed": false
         },
         {
