@@ -68,10 +68,10 @@ def poisson(phi, Nd, epsilon, Mass,    Fermi_E,      eigen_energies, eigen_vecto
 
 
         # eigen_concen es la probabilidad espacial real (1/m)
-        eigen_concen += 
+        eigen_concen += 1
         
         # term_B es el Jacobiano para la diagonal (1/m^2)
-        term_B += 
+        term_B += 1
 
 
 
