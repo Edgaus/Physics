@@ -6,7 +6,7 @@ def finite_differences_mod(P, Mass, diff, L):
     Solves the Schrödinger equation using Finite Differences.
     Takes 'diff' (the step sizes) directly from the Grider class!
     """
-    const = 3.80998 * 2
+    const = 3.80998 *2
 
     # We get 'n' from the Potential array now, since that is our true node count
     n = len(diff) 

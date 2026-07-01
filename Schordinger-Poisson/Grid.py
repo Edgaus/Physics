@@ -65,6 +65,8 @@ class Grider:
             steps = np.array(self.meshes)[:, 1]
             dx = np.repeat(steps, counts)
 
+
+
         self.x_grid = x_grid
         self.dx = dx
         return x_grid, dx
