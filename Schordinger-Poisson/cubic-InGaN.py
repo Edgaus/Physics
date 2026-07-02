@@ -1,7 +1,7 @@
 # Define the layers that define my structure
 import Grid as gr
 import numpy as np
-import finite_differencess as mfd
+import finite_differencess_mod as mfd
 import quantum_plotter as qp
 
 # Masses are in m0 units and energy is in eV
@@ -96,15 +96,7 @@ mass_e_grid =                   grider.grid_propertie( mass_e, 'step'  )
 Band_Edge_Potential_grid =      grider.grid_propertie( Band_Edge_Potential, 'step'  )
 
    
-energies_QW, energies_Func = mfd.finite_differences( Band_Edge_Potential_grid , mass_e_grid , diff, L )
+energies_QW, energies_Func = mfd.finite_differences_mod( Band_Edge_Potential_grid , mass_e_grid , diff, L )
 print(energies_QW[0])
 
-# ... (At the end of your cubic-InGaN.py script) ...
 
-analyzer = qp.QuantumAnalyzer(x_grid=x, 
-                              potential=Band_Edge_Potential_grid, 
-                              energies=energies_QW, 
-                              wavefunctions=energies_Func)
-
-# Plot the raw wavefunctions (crossing the 0 axis)
-#analyzer.plot_wavefunctions(scale_factor=0.2, show_probability=False)
