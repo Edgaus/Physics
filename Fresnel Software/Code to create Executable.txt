@@ -1,0 +1,4 @@
+Code:
+pyinstaller --noconsole --icon=oco.ico --add-data "Data;Data" --add-data "oco.ico;." Fresnel.py
+
+Peeeero, hay que agregar las carpetas Data y también el icono

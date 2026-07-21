@@ -12,8 +12,7 @@ import ctypes # NUEVO: Para la barra de tareas
 import os     # NUEVO: Para las rutas del .exe
 import sys    # NUEVO: Para las rutas del .exe  
 # --- Constants ---
-MATERIALS = ["Air", "AlSb" ,  "Al49Ga51As","AlN (cubico)", "AlN Film" ,"AlN (hexagonal)","AlN2", "GaN (hexagonal)", "GaAs","GaN (cubico)",   "GaN (cubico) v2"    ,"InGaN (cubico) 10% San_Luis", "MgO", "Si", "Si2" ,"SiC" ,"SiO2", "TiN","Pet" ]
-
+MATERIALS = ["Air",  "Al49Ga51As","AlN (cubico)", "AlN Film" ,"AlN", "AlSb" , "GaAs","GaN (hexagonal)","GaN (cubico)"  ,  "InGaN (cubico) 10% San_Luis", "MgO", "Pet","Si" ,"SiC" ,"SiO2", "TiN" ]
 # ================= CUSTOM VECTOR BUTTONS =================
 
 class CircularRemoveButton(tk.Canvas):
@@ -482,8 +481,8 @@ class LayerStackApp(tk.Tk):
         else:
             # --- ARREGLO DE LA GRÁFICA PLANA ---
             # Quitamos "Fresnel/" de la ruta. Ahora buscará directo en la carpeta Data
-            ruta_n = f"Data/{material_name}_n.txt"
-            ruta_k = f"Data/{material_name}_k.txt"  
+            ruta_n = resource_path(f"Data/{material_name}_n.txt")
+            ruta_k = resource_path(f"Data/{material_name}_k.txt")
             
             try:
                 data_n = np.loadtxt(ruta_n, delimiter="\t", skiprows=1)
