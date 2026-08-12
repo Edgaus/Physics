@@ -12,7 +12,7 @@ import ctypes # NUEVO: Para la barra de tareas
 import os     # NUEVO: Para las rutas del .exe
 import sys    # NUEVO: Para las rutas del .exe  
 # --- Constants ---
-MATERIALS = ["Air",  "Al49Ga51As","AlN (cubico)", "AlN Film" ,"AlN", "AlSb" , "GaAs","GaN (hexagonal)","GaN (cubico)"  ,  "InGaN (cubico) 10% San_Luis", "MgO", "Pet","Si" ,"SiC" ,"SiO2", "TiN" ]
+MATERIALS = ["Air",  "Al49Ga51As","AlN (cubico)", "AlN (hexagonal)", "AlN Film" ,"AlN", "AlSb" , "GaAs","GaN (hexagonal)","GaN (cubico)"  ,  "InGaN (cubico) 10% San_Luis", "MgO", "Pet","Si" ,"SiC" ,"SiO2", "TiN" ]
 # ================= CUSTOM VECTOR BUTTONS =================
 
 class CircularRemoveButton(tk.Canvas):
