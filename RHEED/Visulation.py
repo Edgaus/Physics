@@ -34,8 +34,14 @@ ki = 2*np.pi/lambda_e
 
 # Ahora, sabemos que los vectores difractados kf, deben cumplir, al se colisiones elasticas, se debe cumplir la conservacion de energia.
 # Así: |ki| = |kf|. Mientras que la condicion de Laue, para interferencia constructiva el vector kf-ki debe ser un vector de la red recriproca.
-# Y en general dicho vector se puede escribir como kf = h*a_recip + k*b_recip.
+# Y en general dicho vector se puede escribir como kf = h*a_recip + k*b_recip. Esto quiere decir que se debe cumplir la siguiente relacion:
 
+# kf = g_{hk} + lambda_k
+
+# ki^2 = ki^2 + lambda_k^2 + g_{hk}^2 + (2ki . lambda_k) - (2ki . g_{hk} ) - (2lambda_k . g_{hk} )    
+# Ahora tenemos que lambda_k . g_{hk} = 0 ya que por construccion estos vectores son normales. 
+# Mientras que ki . lambda_k debería ser 0, pero no ya que en realidad ki no es realmente paralelo a la superficie del material.
+# Hay un angulo phi.    
 
 
 # Esto es para sustituir pero lo vamos a dejar para mas delante:
