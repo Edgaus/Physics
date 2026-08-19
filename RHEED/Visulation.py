@@ -23,18 +23,18 @@ b_recip = 2*np.pi* ( z_unit.cross( a_real ) ) / (V)
 # Here is comment of file:///C:/Users/edgau/Downloads/materials-14-03056.pdf, where for FCC the recomendation 
 # is to a = sqrt(2)/2x*c_lattice, b = sqrt(2)/2y*c_lattice, when the beam is in the [1,1,0] direction
 
-lambda_e = 12.3/np.sqrt( V*(1 + 1.95*10E-6) )
+Volt = 10000 # Volts
 
-# Para poder obtener los puntos 
+lambda_e = 12.3/np.sqrt( Volt*(1 + 1.95*10E-6) )
 
+# Para poder obtener los puntos que se verán en la pantalla RHEED, es necesario hacer lo siguiente. 
+# Obtener la magnitud del vector k incidente, el cual es 2 pi /lambda
 
+ki = 2*np.pi/lambda_e
 
-
-
-
-
-
-
+# Ahora, sabemos que los vectores difractados kf, deben cumplir, al se colisiones elasticas, se debe cumplir la conservacion de energia.
+# Así: |ki| = |kf|. Mientras que la condicion de Laue, para interferencia constructiva el vector kf-ki debe ser un vector de la red recriproca.
+# Y en general dicho vector se puede escribir como kf = h*a_recip + k*b_recip.
 
 
 
