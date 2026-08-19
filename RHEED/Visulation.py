@@ -23,9 +23,9 @@ b_recip = 2*np.pi* ( z_unit.cross( a_real ) ) / (V)
 # Here is comment of file:///C:/Users/edgau/Downloads/materials-14-03056.pdf, where for FCC the recomendation 
 # is to a = sqrt(2)/2x*c_lattice, b = sqrt(2)/2y*c_lattice, when the beam is in the [1,1,0] direction
 
+lambda_e = 12.3/np.sqrt( V*(1 + 1.95*10E-6) )
 
-
-
+# Para poder obtener los puntos 
 
 
 
