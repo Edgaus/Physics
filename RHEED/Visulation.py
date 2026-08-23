@@ -1,61 +1,109 @@
-# This code is to simulate RHEED, using kinematic theory
-# Definir los vectores primitivos de la red cristalina en el espacio real
+# This code is to simulate RHEED, using kinematic theory.
+# Physics only — the phosphor UI lives in UI_RHEED.py
 
 import numpy as np
-import sympy as sp
+
+ANGSTROM_PER_CM = 1.0e8
 
 
-# 1. Definimos los componentes de los vectores como símbolos
-a_x, a_y, a_z = sp.symbols('a_x a_y a_z')
-b_x, b_y, b_z = sp.symbols('b_x b_y b_z')
+def compute_spots(
+    a=3.61,
+    Volt=10000,
+    angle_razante=2.5,
+    phi_deg=45.0,
+    L_cm=30.0,
+    h_max=10,
+):
+    """
+    Allowed (h,k) rods → phosphor coordinates (v, z) in cm.
 
-# 2. Creamos los vectores usando sp.Matrix (vectores columna 3x1)
-a_real = sp.Matrix([a_x, a_y, a_z])
-b_real = sp.Matrix([b_x, b_y, b_z])
-z_unit = sp.Matrix([ 0,0,1 ])
+    Crystal FCC / zinc-blende (001) is fixed. Beam + screen rotate with phi.
+    Returns dict with spots, eta_array, v_array, z_array, and metadata.
+    """
+    # --- real / reciprocal surface net (FCC(001) primitives) ---
+    a1 = 0.5 * a * np.array([1.0, 1.0, 0.0])
+    a2 = 0.5 * a * np.array([-1.0, 1.0, 0.0])
+    n = np.array([0.0, 0.0, 1.0])
 
-V = a_real.dot(  b_real.cross( z_unit )   )
+    A = np.dot(a1, np.cross(a2, n))  # a^2 / 2
+    a_recip = 2 * np.pi * np.cross(a2, n) / A
+    b_recip = 2 * np.pi * np.cross(n, a1) / A
 
-# 3. Calculamos el producto cruz ALGEBRAICO
-a_recip = 2*np.pi* ( b_real.cross( z_unit ) ) / (V)
-b_recip = 2*np.pi* ( z_unit.cross( a_real ) ) / (V)
+    # --- electron wavevector (lambda in Angstroms, Mahan form) ---
+    lambda_e = 12.3 / np.sqrt(Volt * (1 + Volt * 1.95e-6))
+    ki = 2 * np.pi / lambda_e
 
-# Here is comment of file:///C:/Users/edgau/Downloads/materials-14-03056.pdf, where for FCC the recomendation 
-# is to a = sqrt(2)/2x*c_lattice, b = sqrt(2)/2y*c_lattice, when the beam is in the [1,1,0] direction
+    theta = angle_razante * (np.pi / 180)
+    phi_rad = phi_deg * (np.pi / 180)
 
-Volt = 10000 # Volts
+    # beam and screen co-rotate: k_parallel || t
+    t = np.array([np.cos(phi_rad), np.sin(phi_rad), 0.0])
+    v_hat = np.cross(t, n)
 
-lambda_e = 12.3/np.sqrt( Volt*(1 + 1.95*10E-6) )
+    ki_par = ki * np.cos(theta) * t
+    L = L_cm * ANGSTROM_PER_CM
 
-# Para poder obtener los puntos que se verán en la pantalla RHEED, es necesario hacer lo siguiente. 
-# Obtener la magnitud del vector k incidente, el cual es 2 pi /lambda
+    eta_array = []
+    v_array = []
+    z_array = []
+    spots = []
 
-ki = 2*np.pi/lambda_e
+    for h in range(-h_max, h_max + 1):
+        for k in range(-h_max, h_max + 1):
+            G_hk = h * a_recip + k * b_recip
+            eta2 = (ki * np.sin(theta)) ** 2 + 2.0 * np.dot(ki_par, G_hk) - np.dot(G_hk, G_hk)
 
-# Ahora, sabemos que los vectores difractados kf, deben cumplir, al se colisiones elasticas, se debe cumplir la conservacion de energia.
-# Así: |ki| = |kf|. Mientras que la condicion de Laue, para interferencia constructiva el vector kf-ki debe ser un vector de la red recriproca.
-# Y en general dicho vector se puede escribir como kf = h*a_recip + k*b_recip. Esto quiere decir que se debe cumplir la siguiente relacion:
+            if eta2 < 0.0:
+                continue
 
-# kf = g_{hk} + lambda_k
+            eta = np.sqrt(eta2)
+            eta_array.append([h, k, eta])
 
-# ki^2 = ki^2 + lambda_k^2 + g_{hk}^2 + (2ki . lambda_k) - (2ki . g_{hk} ) - (2lambda_k . g_{hk} )    
-# Ahora tenemos que lambda_k . g_{hk} = 0 ya que por construccion estos vectores son normales. 
-# Mientras que ki . lambda_k debería ser 0, pero no ya que en realidad ki no es realmente paralelo a la superficie del material.
-# Hay un angulo phi.    
+            k_hk = ki_par - G_hk + eta * n
+
+            if np.dot(k_hk, t) <= 0:
+                continue
+
+            r_k = L * k_hk / np.dot(k_hk, t)
+            v_cm = float(np.dot(r_k, v_hat) / ANGSTROM_PER_CM)
+            z_cm = float(np.dot(r_k, n) / ANGSTROM_PER_CM)
+
+            v_array.append(v_cm)
+            z_array.append(z_cm)
+            spots.append(
+                {
+                    "h": h,
+                    "k": k,
+                    "v_cm": v_cm,
+                    "z_cm": z_cm,
+                    "eta": float(eta),
+                    "specular": h == 0 and k == 0,
+                }
+            )
+
+    return {
+        "spots": spots,
+        "eta_array": eta_array,
+        "v_array": v_array,
+        "z_array": z_array,
+        "L_cm": L_cm,
+        "theta_deg": angle_razante,
+        "phi_deg": phi_deg,
+        "z_specular_cm": float(L_cm * np.tan(theta)),
+        "n_spots": len(spots),
+    }
 
 
-# Esto es para sustituir pero lo vamos a dejar para mas delante:
-# Le decimos a lambdify que tome todas nuestras variables de entrada
-# y las evalúe dentro de nuestra matriz de producto cruz
-
-funcion_cruz_rapida = sp.lambdify(
-    (a_x, a_y, a_z, b_x, b_y, b_z), # Variables de entrada
-    producto_cruz_simbolico,        # La expresión a evaluar
-    'numpy'                         # Motor matemático
-)
-
-resultado_array = funcion_cruz_rapida(1, 2, 3, 4, 5, 6)
-
-# El output será: [[-3] [ 6] [-3]]
-print("\nResultado usando NumPy de alto rendimiento:")
-print(resultado_array)
+if __name__ == "__main__":
+    # Default run: Cu(001)-like mesh, [110] azimuth (phi = 45 deg)
+    data = compute_spots()
+    print("n_spots =", data["n_spots"])
+    print("z_specular_cm =", data["z_specular_cm"])
+    for spot in data["spots"]:
+        print(
+            spot["h"],
+            spot["k"],
+            spot["eta"],
+            spot["v_cm"],
+            spot["z_cm"],
+        )
