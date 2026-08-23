@@ -1,0 +1,73 @@
+\documentclass[12pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{cancel}
+
+\title{Condiciones cinemáticas RHEED}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+La esfera tiene radio \(\lvert\vec{K}\rvert\), ahora los rods viven en un
+plano que corta la esfera, el detalle es saber que en general la ecuación
+a resolver es:
+\begin{equation}
+  \vec{K}-\vec{K}'=\vec{g}_{h,k}+\vec{\lambda}_{k}.
+\end{equation}
+
+Las condiciones son que
+\begin{equation}
+  \lvert\vec{K}\rvert=\lvert\vec{K}'\rvert,
+\end{equation}
+\begin{equation}
+  \lvert\vec{K}\rvert=\lvert\vec{K}-\vec{g}_{h,k}+\vec{\lambda}_{k}\rvert.
+\end{equation}
+
+Las condiciones son que
+\begin{equation}
+  \lvert\vec{k}\rvert=\lvert\vec{k}'\rvert,
+\end{equation}
+\begin{equation}
+  \lvert\vec{k}\rvert=\lvert\vec{k}-\vec{g}_{h,k}+\vec{\lambda}_{k}\rvert,
+\end{equation}
+\begin{equation}
+  \bigl[(\vec{k}\cdot\vec{k})\bigr]^{1/2}
+  =
+  \bigl[
+    (\vec{k}-\vec{g}_{h,k}+\vec{\lambda}_{k})
+    \cdot
+    (\vec{k}-\vec{g}_{h,k}+\vec{\lambda}_{k})
+  \bigr]^{1/2}.
+\end{equation}
+
+\begin{equation}
+  \lvert\vec{k}\rvert^{2}
+  =
+  \lvert\vec{k}\rvert^{2}
+  -2\lvert\vec{g}_{h,k}\rvert\,\lvert\vec{k}\rvert\cos\theta
+  +\lvert\vec{g}_{h,k}\rvert^{2}
+  +\lambda_{k}^{2}.
+\end{equation}
+
+Cancelando \(\lvert\vec{k}\rvert^{2}\) en ambos lados:
+\begin{equation}
+  \cancel{\lvert\vec{k}\rvert^{2}}
+  =
+  \cancel{\lvert\vec{k}\rvert^{2}}
+  -2\lvert\vec{g}_{h,k}\rvert\,\lvert\vec{k}\rvert\cos\theta
+  +\lvert\vec{g}_{h,k}\rvert^{2}
+  +\lambda_{k}^{2},
+\end{equation}
+\begin{equation}
+  \lvert\lambda_{k}\rvert^{2}
+  -2\lvert\vec{g}_{h,k}\rvert\,\lvert\vec{k}\rvert\cos\theta
+  +\lvert\vec{g}_{h,k}\rvert^{2}
+  =0.
+\end{equation}
+
+\end{document}

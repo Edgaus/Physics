@@ -1,0 +1,4 @@
+{
+  "name": "Physics RHEED kinematic model",
+  "install": "python3 -m pip install --user -r requirements.txt\npython3 RHEED/check_env.py"
+}
