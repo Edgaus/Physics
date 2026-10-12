@@ -1,4 +1,112 @@
-# Condiciones de crecimiento de InGaN cúbico — notas para otro agente
+Documento de handoff para un **chat nuevo de Cursor**. Léelo entero antes de escribir código o texto. No dependas del chat anterior (se acabaron los tokens).
+
+**Usuario:** Edgar, CINVESTAV. Software engineer + crecimiento/caracterización de nitruros.
+
+**Idioma:** español con el usuario; código y nombres de archivo en inglés.
+
+---
+
+## Qué es este proyecto
+
+Pozos cuánticos de **InGaN cúbico (zincblenda, [001])**, no wurtzita.
+
+Objetivo científico: **modelo en Python de la incorporación de In** en los pozos, contrastado con datos experimentales (Origin) y un manuscrito (Word).
+
+No reinventar mecanismos ya publicados. La novedad viable es:
+
+1. Parametrizar Muraki + pulling + desorción **en cúbico** (R vs T, In efectivo vs nominal).
+2. Añadir un término de **enriquecimiento de In junto a stacking faults {111}** (Cambridge lo midió; no lo modeló vs T/flujo/espesor).
+3. Si los pozos van sobre **c-AlN**, pulling distinto vs c-GaN/3C-SiC (literatura casi toda sobre 3C-SiC).
+
+**No vender como nuevo:** “el In se segrega”, “no hay polarización en [001]”, “las SFs concentran In”, ni el mecanismo metal-modulado ACS 2025.
+
+---
+
+Sistema: **zb-InGaN/GaN, crecimiento [001], **sin polarización/QCSE**.
+
+Componentes:
+
+1. **Muraki (1992):** capa flotante; \(x_n = x_0(1-R^n)\) en el pozo; cola exponencial en la barrera.
+2. **Dehaese (1995):** R depende de T y tasa (cinética, no solo equilibrio).
+3. **Composition pulling (Kawaguchi/Hiramatsu):** strain reduce la entrada de In; más mismatch (p. ej. sobre GaN) → más pulling.
+4. **Desorción térmica de In.**
+5. **Término de SFs (novedad):** enriquecimiento local ∝ densidad de fallas × x_In; explica Stokes ~300 meV (XRD/In medio vs PL).
+
+Salidas del script: `x_In(z)`, In medio del pozo, cola en la barrera, comparación In nominal vs efectivo. CSV + figuras.
+
+Constantes de partida (cúbico): a_GaN ≈ 4.50 Å, a_InN ≈ 4.98 Å; bowing PL c-InGaN b ≈ 2.4 eV (Zscherp 2023). Gap c-GaN ~3.2–3.3 eV, c-InN ~0.7 eV.
+
+
+---
+
+## Literatura (prioridad)
+
+Leer en este orden. Lista completa en el chat previo; esto es el mínimo.
+
+1. Binks, Dawson, Oliver, Wallis, *Appl. Phys. Rev.* **9**, 041309 (2022). DOI 10.1063/5.0097558 — review cúbico, OA.
+2. Muraki *et al.*, *Appl. Phys. Lett.* **61**, 557 (1992). DOI 10.1063/1.107835
+3. Dehaese, Wallart, Mollot, *Appl. Phys. Lett.* **66**, 52 (1995)
+4. Kawaguchi, Shimizu, Hiramatsu, Sawaki, composition pulling, *MRS Internet J. Nitride Semicond. Res.* (1997)
+5. Ding *et al.*, *J. Appl. Phys.* **128**, 145703 (2020) — In ×2.3 junto a SFs
+6. *J. Phys. D* (2024) impact of SFs on zb InGaN SQW luminescence
+7. Pacheco-Salazar *et al.*, *SST* **21**, 846 (2006) — Stokes ~300 meV, clusters
+8. Zscherp *et al.*, *ACS AMI* **15**, 39513 (2023) — c-InGaN todo el rango, b = 2.4 eV
+9. Zscherp *et al.*, *Cryst. Growth Des.* **25**, 3793 (2025). DOI 10.1021/acs.cgd.5c00202 — In se acumula y entra al crecer GaN. **Citar, no redescubrir.**
+10. Karpov/Talalaev MOVPE rate equations (*pss a* 2002, *pss c* 2003) si es MOCVD
+11. Chen/Feenstra/Northrup MBE In segregation (hex, mecanismo de superficie) si es MBE
+
+---
+
+## Estrategia de repo en Cursor
+
+Workspace a usar (crear si no existe; **no** abrir todo OneDrive):
+
+`C:\Users\edgau\OneDrive - CINVESTAV\Documentos\Indium InGaN incorporation`
+
+Estructura objetivo:
+
+```
+c-InGaN-wells/
+  README.md
+  AGENTS.md              ← este archivo (copiar aquí)
+  src/                   ← Python
+  data/raw/              ← CSV de Origin / perfilometría
+  data/processed/
+  origin/                ← .opj (binario; no editar)
+  drafts/
+    manuscript.docx
+    manuscript.md        ← esto sí lo edita el agente
+  refs/reading-list.md
+  .gitignore
+  .cursor/rules/project.mdc
+```
+
+- Git: Cursor-hosted repo (no público). Pedir “guarda / crea el repo en Cursor” cuando haya esqueleto + CSV.
+- `.gitignore`: `__pycache__/`, `.venv/`, `~$*.docx`, `*.opj.bak`, `Thumbs.db`
+- **Origin (.opj):** archivo. El trabajo diario son CSV (File → Export → ASCII).
+- **Word:** el agente edita `drafts/manuscript.md`; Edgar pega al `.docx`.
+- No meter XML enormes ni AFM crudos. PDFs de papers: máximo 5–10, mejor DOI.
+
+
+
+---
+
+## Prompt mínimo para el chat nuevo
+
+Pegar esto:
+
+> Abre la carpeta del repo (o créala). Lee `AGENTS.md`. Pozos InGaN **cúbicos**. Arma el esqueleto del repo + Python del modelo Muraki/pulling/SF. 
+
+
+
+
+
+
+
+
+
+
+# Condiciones de crecimiento de InGaN cúbico (Indium InGaN incorporation)— notas para otro agente
 
 Cuatro muestras de pozos cuánticos cúbicos InGaN/GaN sobre 3C-SiC(001)/Si: **MME914**, **MME925**, **MME930** y **MME931**. Hay tres fuentes y no dicen lo mismo. No las mezcles.
 
