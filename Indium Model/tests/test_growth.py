@@ -76,26 +76,33 @@ class StackTests(unittest.TestCase):
         hot = by_sample["MME914"]
         mid = by_sample["MME925"]
         cold = by_sample["MME931"]
-        self.assertGreater(mid.segregation_length_nm, 2.0 * hot.segregation_length_nm)
+        hot_area = hot.incorporated_wells + hot.incorporated_barriers
+        mid_area = mid.incorporated_wells + mid.incorporated_barriers
+        self.assertGreater(mid.segregation_length_nm, 4.0 * hot.segregation_length_nm)
         self.assertLess(cold.segregation_length_nm, 1.0)
-        self.assertGreater(mid.incorporated_barriers, 2.0 * hot.incorporated_barriers)
+        # 925 keeps the dose and moves it into the barriers. 914 loses it.
+        self.assertGreater(mid.incorporated_barriers, mid.incorporated_wells)
+        self.assertGreater(mid_area, 2.5 * hot_area)
+        self.assertGreater(hot.desorbed / hot.supplied, 0.6)
+        self.assertLess(mid.desorbed / mid.supplied, 0.15)
         self.assertLess(cold.incorporated_barriers, hot.incorporated_barriers)
         self.assertGreater(cold.wells[0].x_max, 0.24)
         self.assertLess(hot.wells[0].x_max, 0.12)
-        self.assertLess(abs(hot.wells[0].x_max - mid.wells[0].x_max), 0.04)
         self.assertGreater(cold.wells[0].thickness_nm, hot.wells[0].thickness_nm)
         # The tail rides toward the surface: the barrier grown before a well
         # stays empty, and the barrier grown after it carries the shoulder.
         mid_result = grow_stack(REGIMES[1], SUPPLY)
         layers = mid_result.layers
         well = [index for index, layer in enumerate(layers) if layer.well_index == 2]
-        self.assertLess(layers[well[0] - 1].x, 1e-3)
-        self.assertGreater(layers[well[-1] + 1].x, 0.05)
-        # 40 nm of GaN between wells drains the floating layer.
+        below = layers[well[0] - 1].x
+        above = layers[well[-1] + 1].x
+        self.assertGreater(above, 0.05)
+        self.assertGreater(above, 5.0 * below)
+        # 40 nm of GaN leaves only a few percent of a long shoulder for the next well.
         for item in reports:
             doses = [well.incorporated for well in item.wells]
-            self.assertLess(abs(doses[0] - doses[1]) / doses[0], 1e-3)
-            self.assertLess(abs(doses[1] - doses[2]) / doses[1], 1e-3)
+            self.assertLess(abs(doses[0] - doses[1]) / doses[0], 0.05)
+            self.assertLess(abs(doses[1] - doses[2]) / doses[1], 0.05)
 
 
 if __name__ == "__main__":

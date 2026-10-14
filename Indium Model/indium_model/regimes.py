@@ -106,28 +106,28 @@ def _regime(
     )
 
 
-# alpha sets the plateau composition. R sets how many monolayers the
-# floating In rides. The two are independent given I + R + D = 1, and a
-# high R leaves little probability per monolayer for either burial or
-# desorption — that is the shoulder regime.
+# alpha is the fraction of the supplied In that stays in the crystal.
+# R decides whether that indium freezes in the well or rides into the
+# barrier. MME925 keeps the indium and parks it in the barrier. MME914
+# desorbs the same floating population, so the shoulder and the area go away.
 REGIMES: tuple[Regime, ...] = (
     _regime(
         "MME914",
         1,
         470.0,
-        alpha=0.32,
-        segregate=0.90,
+        alpha=0.30,
+        segregate=0.86,
         sims_peaks=(0.086, 0.086, 0.126),
-        note="Meseta baja y cola corta: el In flotante se desorbe antes de recorrer la barrera.",
+        note="Desorción: el In flotante sale del cristal, el área cae y no queda hombro.",
     ),
     _regime(
         "MME925",
         2,
         427.0,
-        alpha=0.42,
-        segregate=0.96,
+        alpha=0.95,
+        segregate=0.98,
         sims_peaks=(0.123, 0.117, 0.109),
-        note="Meseta similar, pero el In flota varias nm y reaparece como hombro en la barrera.",
+        note="Casi no se desorbe. El pozo es más corto que λ y el In se incorpora en la barrera.",
     ),
     _regime(
         "MME930",
