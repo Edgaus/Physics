@@ -14,6 +14,7 @@ AlGaAs = {
         'Bandgap' : 1.65,
         'dielectric' : 12.03
         }
+
 GaAs = { 
         'mass_e': 0.067, 
         'Bandgap' : 1.426,
