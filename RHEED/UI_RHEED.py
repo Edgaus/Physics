@@ -1,5 +1,7 @@
 # UI for the kinematic RHEED phosphor screen.
-# Physics lives in Visulation.py — this file only draws and calls compute_spots().
+# Physics:
+#   Visulation.compute_spots()   → ideal points (thin rods)
+#   Visulation_streaks.compute_streaks() → vertical lines (finite rod width)
 
 import tkinter as tk
 from tkinter import ttk
@@ -7,6 +9,7 @@ from tkinter import ttk
 import numpy as np
 
 from Visulation import compute_spots
+from Visulation_streaks import compute_streaks
 
 
 class RheedScreen(tk.Tk):
@@ -18,6 +21,7 @@ class RheedScreen(tk.Tk):
         self.configure(bg="#1b1b1b")
 
         self._spots = []
+        self._streaks = []
         self._hit_map = []
 
         self.var_a = tk.DoubleVar(value=3.61)
@@ -26,6 +30,8 @@ class RheedScreen(tk.Tk):
         self.var_phi = tk.DoubleVar(value=45.0)
         self.var_L = tk.DoubleVar(value=30.0)
         self.var_hmax = tk.IntVar(value=10)
+        self.var_D = tk.DoubleVar(value=80.0)  # domain/terrace size (Å)
+        self.var_mode = tk.StringVar(value="streaks")  # "spots" | "streaks"
         self.status = tk.StringVar(value="")
 
         self._build()
@@ -44,12 +50,43 @@ class RheedScreen(tk.Tk):
             font=("Segoe UI", 14, "bold"),
         ).pack(anchor="w", padx=16, pady=(18, 8))
 
+        mode = tk.Frame(side, bg="#242424")
+        mode.pack(fill=tk.X, padx=16, pady=(0, 8))
+        tk.Label(mode, text="Patrón", bg="#242424", fg="#d0d0d0", font=("Segoe UI", 9)).pack(
+            anchor="w"
+        )
+        tk.Radiobutton(
+            mode,
+            text="Puntos (rods ideales)",
+            variable=self.var_mode,
+            value="spots",
+            command=self.recompute,
+            bg="#242424",
+            fg="#d0d0d0",
+            selectcolor="#3a3a3a",
+            activebackground="#242424",
+            activeforeground="#d0d0d0",
+        ).pack(anchor="w")
+        tk.Radiobutton(
+            mode,
+            text="Líneas verticales (streaks)",
+            variable=self.var_mode,
+            value="streaks",
+            command=self.recompute,
+            bg="#242424",
+            fg="#d0d0d0",
+            selectcolor="#3a3a3a",
+            activebackground="#242424",
+            activeforeground="#d0d0d0",
+        ).pack(anchor="w")
+
         self._slider(side, "a (Å)", self.var_a, 3.2, 5.0, 0.01)
         self._slider(side, "Energía (kV)", self.var_kV, 5.0, 20.0, 0.1)
         self._slider(side, "θ incidencia (°)", self.var_theta, 0.5, 5.0, 0.1)
         self._slider(side, "φ azimut (°)", self.var_phi, 0.0, 90.0, 0.5)
         self._slider(side, "L cámara (cm)", self.var_L, 10.0, 50.0, 0.5)
         self._slider(side, "rango (h,k)", self.var_hmax, 2, 15, 1)
+        self._slider(side, "D terraza/dominio (Å)", self.var_D, 20.0, 400.0, 5.0)
 
         ttk.Button(side, text="Recalcular", command=self.recompute).pack(
             fill=tk.X, padx=16, pady=(12, 8)
@@ -67,10 +104,11 @@ class RheedScreen(tk.Tk):
 
         tk.Label(
             side,
-            text="Física: Visulation.compute_spots()\n"
-            "Haz y pantalla giran con φ.\n"
-            "z = 0: borde de sombra.\n"
-            "+z hacia abajo (como en la foto).",
+            text="Puntos: Visulation.compute_spots()\n"
+            "Líneas: Visulation_streaks\n"
+            "  (rod width δ≈2π/D)\n"
+            "D grande → streaks cortos.\n"
+            "D chico → streaks largos.",
             bg="#242424",
             fg="#8d8d8d",
             font=("Segoe UI", 8),
@@ -129,7 +167,7 @@ class RheedScreen(tk.Tk):
         shown()
 
     def recompute(self):
-        data = compute_spots(
+        kwargs = dict(
             a=self.var_a.get(),
             Volt=self.var_kV.get() * 1000.0,
             angle_razante=self.var_theta.get(),
@@ -137,21 +175,34 @@ class RheedScreen(tk.Tk):
             L_cm=self.var_L.get(),
             h_max=int(self.var_hmax.get()),
         )
-        self._spots = data["spots"]
-        self.status.set(
-            f"{data['n_spots']} rods permitidos\n"
-            f"especular z = {data['z_specular_cm']:.2f} cm"
-        )
+        if self.var_mode.get() == "streaks":
+            data = compute_streaks(D_A=self.var_D.get(), **kwargs)
+            self._streaks = data["streaks"]
+            self._spots = data["spots"]
+            self.status.set(
+                f"{data['n_streaks']} streaks  |  D = {data['D_A']:.0f} Å\n"
+                f"δG = {data['delta_G']:.3f} Å⁻¹\n"
+                f"especular z = {data['z_specular_cm']:.2f} cm"
+            )
+        else:
+            data = compute_spots(**kwargs)
+            self._streaks = []
+            self._spots = data["spots"]
+            self.status.set(
+                f"{data['n_spots']} puntos (rods ideales)\n"
+                f"especular z = {data['z_specular_cm']:.2f} cm"
+            )
         self.redraw()
 
     def _to_canvas(self, v_cm, z_cm, width, height):
         span = max(4.0, self.var_L.get() * np.tan(np.deg2rad(self.var_theta.get())) * 4.0)
-        if self._spots:
-            span = max(
-                span,
-                max(abs(s["v_cm"]) for s in self._spots) * 1.3,
-                max(abs(s["z_cm"]) for s in self._spots) * 1.3,
-            )
+        zs = [s["z_cm"] for s in self._spots]
+        vs = [s["v_cm"] for s in self._spots]
+        for st in self._streaks:
+            zs.extend([st["z_min"], st["z_max"]])
+            vs.extend([st["v_min"], st["v_max"]])
+        if zs and vs:
+            span = max(span, max(abs(v) for v in vs) * 1.3, max(abs(z) for z in zs) * 1.3)
         margin = 40
         usable_w = max(width - 2 * margin, 1)
         usable_h = max(height - 2 * margin, 1)
@@ -171,9 +222,6 @@ class RheedScreen(tk.Tk):
             return
 
         _x0, _y0, scale, z0, cx = self._to_canvas(0.0, 0.0, w, h)
-        x_spec, y_spec, *_ = self._to_canvas(
-            0.0, self.var_L.get() * np.tan(np.deg2rad(self.var_theta.get())), w, h
-        )
 
         c.create_rectangle(8, 8, w - 8, h - 8, outline="#2f4f2f", width=2)
         c.create_text(
@@ -197,30 +245,45 @@ class RheedScreen(tk.Tk):
         c.create_text(w - 40 - bar / 2, h - 42, text="1 cm", fill="#8fbf8f", font=("Segoe UI", 8))
 
         self._hit_map.clear()
-        for spot in self._spots:
-            x, y, *_ = self._to_canvas(spot["v_cm"], spot["z_cm"], w, h)
-            if spot["specular"]:
-                r = 7
-                color = "#d8ffd8"
-            else:
-                r = 4
-                color = "#5dff5d"
-            c.create_oval(x - r, y - r, x + r, y + r, fill=color, outline="")
-            if spot["specular"] or (abs(spot["h"]) + abs(spot["k"]) <= 2):
-                c.create_text(
-                    x + 8,
-                    y - 8,
-                    text=f"{spot['h']}{spot['k']}",
-                    fill="#cfe8cf",
-                    anchor="w",
-                    font=("Consolas", 8),
-                )
-            self._hit_map.append((int(x), int(y), 12, spot))
 
-        c.create_oval(x_spec - 9, y_spec - 9, x_spec + 9, y_spec + 9, outline="#ffffaa")
-        c.create_text(
-            x_spec + 12, y_spec + 10, text="00", fill="#ffffaa", anchor="w", font=("Consolas", 9)
-        )
+        if self.var_mode.get() == "streaks" and self._streaks:
+            for st in self._streaks:
+                color = "#e8ffe8" if st["specular"] else "#5dff5d"
+                width_px = 3 if st["specular"] else 2
+                pts = st["points"]
+                # Draw as connected segments (usually nearly vertical)
+                for i in range(len(pts) - 1):
+                    x1, y1, *_ = self._to_canvas(pts[i][0], pts[i][1], w, h)
+                    x2, y2, *_ = self._to_canvas(pts[i + 1][0], pts[i + 1][1], w, h)
+                    c.create_line(x1, y1, x2, y2, fill=color, width=width_px)
+                # Center hit target for hover
+                x, y, *_ = self._to_canvas(st["v_cm"], st["z_cm"], w, h)
+                self._hit_map.append((int(x), int(y), 14, st))
+                if st["specular"] or (abs(st["h"]) + abs(st["k"]) <= 2):
+                    c.create_text(
+                        x + 8,
+                        y - 8,
+                        text=f"{st['h']}{st['k']}",
+                        fill="#cfe8cf",
+                        anchor="w",
+                        font=("Consolas", 8),
+                    )
+        else:
+            for spot in self._spots:
+                x, y, *_ = self._to_canvas(spot["v_cm"], spot["z_cm"], w, h)
+                r = 7 if spot["specular"] else 4
+                color = "#d8ffd8" if spot["specular"] else "#5dff5d"
+                c.create_oval(x - r, y - r, x + r, y + r, fill=color, outline="")
+                if spot["specular"] or (abs(spot["h"]) + abs(spot["k"]) <= 2):
+                    c.create_text(
+                        x + 8,
+                        y - 8,
+                        text=f"{spot['h']}{spot['k']}",
+                        fill="#cfe8cf",
+                        anchor="w",
+                        font=("Consolas", 8),
+                    )
+                self._hit_map.append((int(x), int(y), 12, spot))
 
     def _on_motion(self, event):
         best = None
@@ -233,11 +296,15 @@ class RheedScreen(tk.Tk):
         if best is None:
             self.hover.config(text="")
             return
+        extra = ""
+        if "z_min" in best:
+            extra = f"   streak z = [{best['z_min']:.2f}, {best['z_max']:.2f}] cm"
         self.hover.config(
             text=(
                 f"({best['h']},{best['k']})   "
                 f"v = {best['v_cm']:+.3f} cm   "
                 f"z = {best['z_cm']:+.3f} cm"
+                f"{extra}"
             )
         )
 
