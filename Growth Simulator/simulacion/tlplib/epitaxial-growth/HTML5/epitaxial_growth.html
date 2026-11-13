@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Epitaxial growth</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    	
+		<script>
+		// hide and show CC licence words
+		function showTxt() {   
+			document.getElementById("para").style.visibility = 'visible';
+		}  // end showTxt
+
+		function hideTxt() { 
+			document.getElementById("para").style.visibility = 'hidden';
+  		 }  // end hideTxt
+		
+		// page navigation
+		function gotoPage(p) {
+			// replace next fn gEBCN as fails in IE<9			
+		   // var x = document.querySelectorAll(".payj");  // for IE8 but not IE7
+			var x = document.getElementsByClassName("payj");
+			var len = x.length;
+			for (var i=1; i<(len+1); i++) {
+				var ppp = window['p'+i]; //eval('p'+i);
+				document.getElementById('p'+i).style.display = 'none';
+				if (i == p) {
+					document.getElementById('p'+i).style.display = 'block';
+				}
+    		}	
+		}
+		
+				// sets the dimensions of kanvas and positions the bottom logos			
+		function setAnimDimensions(w,h)  {
+			//w = animation width
+			//h = animation height
+			document.getElementById("kanvas").style.height = String(h) + "px";
+			document.getElementById("kanvas").style.width = String(w) + "px";
+			document.getElementById("kanvas").style.margin = "0px auto";
+			document.getElementById("kanvas").style.border = "2px solid blue";
+			// position footers
+			var divcc = document.getElementById("cc");
+			var divpara = document.getElementById("para");
+			divcc.style.position = 'absolute';
+			divpara.style.position = 'absolute';
+			divcc.style.top = (h - 40) + "px";
+			divpara.style.top = (h - 85) + "px";						
+		}
+				
+		var svgNS = "http://www.w3.org/2000/svg";  
+	
+		function drawCircle(svgID,cx,cy,r,sCol,sThick,sFill,id)   {
+		 	var myCircle = document.createElementNS(svgNS, "circle");
+			myCircle.setAttributeNS(null,"id",id);
+			myCircle.setAttributeNS(null, 'cx', cx);
+			myCircle.setAttributeNS(null, 'cy', cy);
+			myCircle.setAttributeNS(null, 'r', r);
+			myCircle.setAttributeNS(null,"stroke-width",sThick);
+			myCircle.setAttributeNS(null,"stroke",sCol);
+			myCircle.setAttributeNS(null, 'fill', sFill);
+			document.getElementById(svgID).appendChild(myCircle);
+	}
+		
+	
+	function drawPolyline(svgID,pts,sCol,sThick,id) {
+		/* pts = points as e.g. "40,50 50,60 60,70"
+		sCol = color as '#f00' 
+		sThick = thickness as "0.5" 
+		id = id */
+		var poly = document.createElementNS(svgNS, "polyline");
+		poly.setAttributeNS(null,"id",id);
+		poly.setAttributeNS(null, "points", pts);
+		poly.setAttributeNS(null, "fill", "none");
+		poly.setAttributeNS(null, "stroke", sCol);
+		poly.setAttributeNS(null, "stroke-width", sThick);
+		document.getElementById(svgID).appendChild(poly); 
+	}				
+		
+		</script>
+		
+		<style>
+		#container {
+		   position:relative;
+		}
+		#kanvas {
+		   width:550px; 
+		   min-height:400px;  
+		   margin: 0px auto; 
+		   border-style: solid; border-width:2px; border-color:blue; 
+		   position:relative;
+		}
+		#cc {
+		  position: absolute;    
+		  top:360px; left:0px; /* 360 = 40 less than height */
+		  width:100%; 
+		  z-index: 3;
+		  /*background-color:#cc0000;  */
+		}
+		  
+		#para {
+		  position: absolute;   
+		  top:315px;   /* 315 = 85 less than height */
+		  padding:0px;
+		  font-family:Arial;
+		  font-weight: bold;
+		  font-size: 11px;
+		  color:blue; 
+		  border-style: solid;
+		  border-color: #000000;
+		  border-width:1px;
+		  z-index: 100;
+		  visibility: hidden;
+		}
+		
+			/* DOiTPoMS buttons */
+		.dbutton {
+			height: 25px;
+			margin: 0px;
+			background-position: bottom;
+			display: inline-block;  /* allows on sameline */
+		}
+
+		.dbutton:hover {
+			background-position: center; 
+		}
+
+		#start {
+			width: 75px;
+			background-image:  url("../../../images/start.png");
+		}
+		#back {
+			width: 78px;
+			background-image: url('../../../images/back.png');
+		}
+		
+		#restart_btn {
+			width: 98px;
+			background-image: url('../../../images/restart.png');
+		}
+		
+		#play{
+			width: 78px;
+			background-image:    url("../../../images/play.png");
+		}
+		
+		#pause {
+			width: 83px;
+			background-image: url('../../../images/pause.png');
+		}
+		/* page divs */
+		.leftText {
+		  position:relative;
+		  float: left;
+		  padding: 5px;
+		  width:540px;
+		  width:245px;
+		  height:245px;
+		  font-size: 14px;
+		  font-family: Arial, Helvetica, sans-serif;
+		  pointer-events: none; 
+/*		   background-color:#a6ba45;     */
+		}
+		
+		/* page id */
+		#p1 {
+		  display:block;				
+		}
+		#p2, #p3, #p4 {
+		  display:none;				
+		}
+		
+		
+		#ptitle, #txt1, #hcontainer, #t5, #t5a, #t5b  {
+			position: absolute;
+			top: 10px;
+			width: 510px;
+			left: 20px;
+			font-family: Arial;
+			font-size: 32px;
+			text-align:center; 
+		}
+		#txt1, #hcontainer {
+			top: 50px;
+			font-size: 14px; 
+			text-align:left; 
+		}
+		#hcontainer {
+			top: 340px;
+		}
+		#t2 {
+			width: 270px;
+			left: 500px;
+		}
+		#menuholder  {
+			position: absolute;
+			top: 20px;
+			width: 490px;
+			left: 20px;
+			height:220px;
+			font-family: Arial;
+			font-size: 14px;
+			text-align:left; 
+			padding:10px;
+			border: solid 1px black;
+		}
+		#nav, #nav2 {
+			position: absolute;
+			top: 330px;
+			left: 300px;
+			width: 200px;
+			text-align:right;
+		}
+		#go_txt, #temp_txt, #aabs_txt, #asbs_txt, #sizedifference_txt  {
+			width:30px;
+			text-align: right;
+			border:none;
+		}
+		#go_sb, #temp_sb, #aabs_sb, #asbs_sb, #sizedifference_sb  {
+			width:200px;
+			transform: translate(0%, 7px);
+		}
+		.vert {
+			transform: translate(0%, -20px);
+		}
+		#nav2 {
+			top: 330px;
+		}
+
+		</style>
+		<svg  style="position: absolute; top:0px; left:0px; height:0px; width:0px;" > 
+      <defs>
+	  <radialGradient cx="50%" cy="50%" r="50%" fx="40%" fy="25%" id="red_white" > 
+      <stop offset="0%" style="stop-color:#fff;stop-opacity:1" /> <stop offset="100%" style="stop-color:#c00;stop-opacity:1" /> 
+      </radialGradient> 	  
+	  <radialGradient cx="50%" cy="50%" r="50%" fx="40%" fy="25%" id="black_white" > 
+      <stop offset="0%" style="stop-color:#fff;stop-opacity:1" /> <stop offset="100%" style="stop-color:#000;stop-opacity:1" /> 
+      </radialGradient> 
+	  </defs> 
+	  </svg>
+	</head>
+	
+	<body>
+<div id="container"> 
+  <div id="kanvas"> 
+    <!-- DoITPoMS  and CC logos -->
+    <div id="para"> Re-use of this resource is governed by a Creative Commons 
+      Attribution-<br />
+      NonCommercial-ShareAlike 4.0 International<br />
+      https://creativecommons.org/licenses/by-nc-sa/4.0/ </div>
+    <!-- end para -->
+    <div id="cc" > <img src = "../../../images/by-nc-sa.svg" alt="creative commons" onMouseOver="showTxt()" onMouseOut="hideTxt()" height=40 width=120 /> 
+      <img src = "../../../images/roo.png" alt="DoITPoMS logo" height=40 width=180 style="float:right"; /> 
+    </div>
+    <!-- end cc -->
+    <script>
+		setAnimDimensions(550,450);                                     
+	</script>
+    <!-- divs for storyline -->
+    <!--  new pasge starts here    -->
+    <div class="payj" id="p1"> <svg id="svg1" style="position: absolute; top:0px; left:0px; height:420px; width:550px;" > 
+      <circle cx="190" cy="350" r="10"  fill="url(#black_white)" /> <circle cx="190" cy="380" r="10"  fill="url(#red_white)" /> 
+      </svg> 
+      <div id="ptitle">Epitaxial growth</div>
+      <div id="txt1">This animation shows a simple 2D model of epitaxial growth 
+        during molecular beam epitaxy (MBE).</div>
+      <div id="hcontainer"> Generic substrate atom<br>
+        <br>
+        Generic adatom </div>
+      <div id="nav"> 
+        <p class="dbutton" id="start" onclick="gotoPage(2)"></p >
+      </div>
+      <script>
+	    for (var i=0; i<9; i++) {
+		  for (var j=0; j<29; j++) {
+			  var x = j*20;
+			  var y = 180 + i*17; 
+			  if (i==1  || i==3 || i==5 || i==7)  {
+				  x = 10+j*20;
+			  }
+			  var col = (i<=5)  ? "url(#red_white)" : "url(#black_white)";
+			  if (i==0)  {
+			  	if(j==23)  {
+					drawCircle("svg1",x,y,10,"#000",0,"url(#red_white)","")
+				} else {
+			  		;
+			    }
+			  } else if (i==1)  {
+			  	if(j==0 || j==3 || j==4 || j==9 || j==13 || j==14 || j==15 || j==20 || j==21 || j==26 || j==27)  {
+					drawCircle("svg1",x,y,10,"#000",0,"url(#red_white)","")
+				} else {
+			  		;
+			    }
+			  } else {
+			  	drawCircle("svg1",x,y,10,"#000",0,col,"");
+			  }
+		 	}
+		 }
+		 
+		 </script>
+    </div>
+    <!-- end payj - p1 -->
+    <!--  new pasge starts here    -->
+    <div class="payj" id="p2"> <svg id="svg2" style="position: absolute; top:50px; left:0px; height:420px; width:550px; " > 
+      </svg> 
+      <div id="menuholder"> Use the scrollbars to set the parameters. Then press 
+        'Go' to simulate.<br>
+        <br>
+        <input type="range" id="go_sb"  min="1" max="151" value="100" step="10" oninput="go_sbListener(this.value)" onchange="go_sbListener(this.value)">
+        &nbsp;Number of atoms: 
+        <input type="text" id="go_txt" name="go_txt"  value="100" >
+        <br>
+        <input type="range" id="temp_sb"  min="20" max="80" value="0.2" step="10" oninput="temp_sbListener(this.value)" onchange="temp_sbListener(this.value)">
+        &nbsp;Temperature: 
+        <input type="text" id="temp_txt" name="temp_txt"  value="0.2" >
+        Tm<br>
+        <input type="range" id="aabs_sb"  min="0" max="100" value="0" step="10" oninput="aabs_sbListener(this.value)" onchange="aabs_sbListener(this.value)">
+        &nbsp;Adatom-adatom bond strength: 
+        <input type="text" id="aabs_txt" name="aabs_txt"  value="0" >
+        <br>
+        <input type="range" id="asbs_sb"  min="0" max="100" value="0" step="1" oninput="asbs_sbListener(this.value)" onchange="asbs_sbListener(this.value)">
+        &nbsp;Adatom-substrate bond strength: 
+        <input type="text" id="asbs_txt" name="asbs_txt" value="0" >
+        <br>
+        <input type="range" id="sizedifference_sb"  min="0" max="100" value="0" step="10" oninput="sizedifference_sbListener(this.value)" onchange="sizedifference_sbListener(this.value)">
+        &nbsp;Lattice parameter difference: 
+        <input type="text" id="sizedifference_txt" name="sizedifference_txt"  value="0" >
+        &nbsp%<br>
+        <br>
+        Bond strengths are in arbitrary units &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; 
+        <input type="button" id="go_btn" value="&emsp;&emsp;Go&emsp;&emsp;" onclick="gogo()">
+      </div>
+      <div id="nav2" > 
+        <p class="dbutton" id="back" onclick=" gotoPage(1)"></p >
+        <br>
+        <p class="dbutton" id="play" onclick=" resume()"></p >
+        &nbsp; 
+        <p class="dbutton" id="pause" onclick=" ppause()"></p >
+        <br>
+        <p class="dbutton" id="restart_btn" onclick="restartt()"></p >
+      </div>
+      <script>
+	  // substrate
+	    for (var i=0; i<3; i++) {
+		  for (var j=0; j<29; j++) {
+			  var x = j*20;
+			  var y = 235 + i*17; 
+			  if (i==1 )  {
+				  x = 10+j*20;
+			  }
+			  var n = (i * 29) + j;
+			  var idd = "aa"+n;
+			  var col =  "url(#black_white)";
+			  drawCircle("svg2",x-10,y,10,"#000",0,col,idd);
+			  document.getElementById(idd).p = j;
+			  document.getElementById(idd).q =13+Number(i);
+		 	}
+		 }
+	  var sradius = 10   //substrate radius in pixels
+      var sacross = 34 //no. of substrate atoms across
+      var sup = 3 //no. of substrate layers
+      var aradius = 10 //adatom radius in pixels
+      var root3 = Math.sqrt(3) //y-separation of substrate layers if radius = 1
+      var syspacing = sradius * root3 //substrate y spacing
+      var layeroffset = 0 //used to shift even layers along 10 pixels for hexagonal structure
+      var rawtemp = 0 //used to display temperature to a suitable number of significant figures
+      var celcius = 0.2 //temperature value as set from 0.2-0.8 on the scroll bar. Is normalized exponentially to...
+      var temperature = 0 //...this temperature value that normalizes from 0 to 100. Probabity of diffusion scales linearly with this value
+      var aabs = 0 //adatom-adatom bond strength. Set and used in the same way as temperature
+      var initaabs = 0 //The initial aabs as set on the scrollbar. The aabs can change when i fudge SK, this is a constant throughout the simulation
+      var asbs = 0 //adatom-substrate bond strength. Set and used in the same way as temperature
+      var afbs = 1  //the adatom-fudge bond stregnth, where fudge is the already deposited adatoms after SK growth is triggered
+      var sizedifference = 0 //the percent atomic size difference multiplied by 100. Used to display percent atomic size difference to 2 d.p.
+      var strain = 0 //the percent atomic size difference, in percent, is used to calculate...
+      var critical //..the critical number of complete rows before island-on-monolayer growth is triggered. equal to 14/strain (arbitary)
+      var forbidden; //no longer means forbidden, just used to signify sites in the lattice that are shaded blue. (Guard atoms)
+      var farray = [] //The array of lattice site circles
+
+	  var scr = 100 //Position of scrollbar, used to select no. of atoms to drop
+      var atombucket = 100 //Holds no. of atoms once scrollbar is gone
+      var endcount //the simulation contines to run for 20 ticks after the last atom lands to prevent dodgy looking structures
+                   //this counter handles that
+      var waitcount //this counter deals with the delay between one atom landing and the next falling - currently set to 1 ms
+      var waiting //whether or not the system is waiting to drop the next adatom after one has landed - only true for 1ms at the moment
+      var filled = [sacross]; //Array holding info on whether(p,q) already contains an atom (substrate or adatom)
+      var energy = [] //Array holding information on the energetic favorableness (lol) of all the lattice sites
+      var p = 0 //position in lattice site, used only to initialise the 'filled' array below
+      var q = 0 //the rest of the code uses aatom[aindex].p etc. (extension property of movieclip class
+      var fallingacross = 0 //Is the number of pixels across a falling atom moves across every tick. see falling()
+      var firstanrg //the energy associated with having an adatom first nearest neighbour
+      var secondanrg //ditto, second nearest neighbour
+      var thirdanrg //third
+      var aatom = [] //adatom array. is later filled with instances of the adatom class
+      var aindex = 1 //used to index the identity of each individual adatom. aatom[aindex] will reference the atom currently falling
+      var blacklistArray = [] //the list of atoms which are not allowed to diffuse anymore after SK growth transition into island growth (a fudge)
+      var transformed //Whether or not the SK transition from monolayer into island has been triggered (a fudge)
+      transformed = false //False when the simulation starts
+      var skmod //set to 1 at the moment so does nothing - the factor which aabs is multplied by to calculate afbs
+      skmod = 1
+	    var blossomtimer= gsap.timeline();
+	  var endtimer = gsap.timeline();
+	  //var diffusewaittimer = gsap.timeline();
+	   blossomtimer.to("#ptitle", {duration:0, delay:0.001, onComplete:blossom } );  //new Timer(1,0) //when blossomtimer is started, blossom is called every 1ms until the end of the simulation
+	   blossomtimer.pause();
+	   function doendtimer() {
+	   endtimer.to("#ptitle", {duration:0, delay:0.01, onComplete:endblossom } ); //new Timer(1,20
+	   }      //endtimer.addEventListener(TimerEvent.TIMER, endblossom)
+	  endtimer.pause();
+	   function endblossom()   {   //lets the simulation run for 20 ticks after the last atom has landed
+         document.getElementById("restart_btn").style.visibility = "visible";
+			blossomtimer.pause();
+      }
+	  
+		  for (var i=1; i<150; i++) {
+			  var x = -20;
+			  var y = -20; 
+			  var idd = "a" + i;
+			  drawCircle("svg2",x,y,10,"#000",0,"url(#red_white)",idd);
+			  aatom[i] = idd;
+			  document.getElementById(aatom[i]).t = 2;
+         	  document.getElementById(aatom[i]).f = 2;
+			  //document.getElementById(aatom[i]).p = -20;
+         	  //document.getElementById(aatom[i]).q = 20;
+		 }
+		 
+	  function restartt() {
+	 	 blossomtimer.pause();
+		 document.getElementById("menuholder").style.visibility = "visible";
+		 document.getElementById("restart_btn").style.visibility = "hidden";
+		 document.getElementById("pause").style.visibility = "hidden";
+		 document.getElementById("back").style.visibility = "hidden";
+		 document.getElementById("play").style.visibility = "hidden";
+		 scr = 100;
+		 rawtemp = 0.2;
+		 celcius = 0.2;
+		 temperature = 0.2;
+		 sizedifference = 0;
+		 aabs = 0;
+		 asbs = 0;
+		 bestplace = {};
+		 aindex = 1;	 
+         initfilled() //reinitialises the 'filled' array 
+         initenergy(); 		 
+		 document.getElementById("go_sb").value = 100;
+		 document.getElementById("temp_sb").value = 0;
+		 document.getElementById("aabs_sb").value = 0;
+		 document.getElementById("asbs_sb").value = 0;
+		 document.getElementById("sizedifference_sb").value = 0;
+		 document.getElementById("go_txt").value = 100;
+		 document.getElementById("temp_txt").value = 0;
+		 document.getElementById("aabs_txt").value = 0;
+		 document.getElementById("asbs_txt").value = 0;
+		 document.getElementById("sizedifference_txt").value = 0;
+		 initfilled() //reinitialises the 'filled' array 
+		  initenergy( );
+		 for (var i=1; i<150; i++) {
+			  document.getElementById(aatom[i]).setAttribute("cx",-20);
+         	  document.getElementById(aatom[i]).setAttribute("cy",-20);
+			  document.getElementById(aatom[i]).p = 24;
+         	  document.getElementById(aatom[i]).q = 1;
+		 }
+	}
+	
+         
+		 restartt();
+		 
+		 
+		function go_sbListener(val) {
+         	scr = Math.round(val)
+			document.getElementById("go_txt").value = scr
+		}
+		
+		
+		
+		function temp_sbListener(val) {
+			 rawtemp = val * 100 //used to round to 2 d.p.
+			 celcius = Math.round(rawtemp) / 10000
+			document.getElementById("temp_txt").value = celcius;
+		}
+		
+		function aabs_sbListener(val) {
+         	aabs = Math.round(val)
+			document.getElementById("aabs_txt").value = aabs;
+		}
+		
+		function asbs_sbListener(val) {
+         	asbs = Math.round(val)
+			document.getElementById("asbs_txt").value = asbs;
+		}
+		
+		function sizedifference_sbListener(val) {
+			 sizedifference = Math.round(val)
+			 strain = sizedifference/100 //so you can display rounded to 2 decimal places
+			document.getElementById("sizedifference_txt").value = strain;
+		}
+	
+	  //////////////////////////////////////////////////////////
+      function ppause()//this is the function called that pauses the simulation
+      {
+         blossomtimer.pause();
+         document.getElementById("pause").style.visibility = "hidden";
+         document.getElementById("restart_btn").style.visibility = "visible";
+         document.getElementById("play").style.visibility = "visible";
+      }
+      //////////////////////////////////////////////////////////
+      function resume()//this is the function called that resumes the simulation
+      {
+         blossomtimer.play()
+         document.getElementById("restart_btn").style.visibility = "hidden";
+         document.getElementById("pause").style.visibility = "visible";
+         document.getElementById("play").style.visibility = "hidden";
+      }
+      ///////////////////////////////////////////////////////////
+ 
+      //////////////////////////////////////////////////////////
+      initfilled()//initialises the filled array
+      function initfilled() // initialises the 'filled' array
+      {
+         for (p = -4; p <= 35; p++)  //Say all sites are empty (filled = 0)
+         {
+             filled[p] = new Array(14);
+             for (q = 0; q <= 16; q++)             {
+                   filled[p][q] = 0 //corresponds to empty
+            }
+         }
+         for(q = 0; q<=16; q++)         {
+            filled[-1][q] = 4 //corresponds to a guard atom with no energy associated with it
+            filled[29][q] = 4 //filled = 3 is no longer used
+         }
+         for(p=-2; p<= 31; p++) // makes the substrate 'solid'
+         {
+            filled[p][14] = 1 //corresponds to a substrate atom
+            filled[p][15] = 1
+            filled[p][16] = 1
+         }
+      }
+      //////////////////////////////////////////////////////////
+      initenergy()//initialises the energy array
+      function initenergy() //initalises the energetics array
+      {
+         for (p = -4; p <= 33; p++) //set everything to a number = 0
+         {
+             energy[p] = new Array();
+             for (q = 0; q <= 16; q++)             {
+                   energy[p][q] = 0
+            }
+         }
+         recalcall() //recalculate energies based on first, second and third nearest neighbours to a site
+      }
+      //////////////////////////////////////////////////////////
+      function recalc (p,q) //recalculates the energy associated with the lattice site (p,q)
+      {
+	  //console.log("recalc p="+p+" q="+q)
+         var anrg //energy due to adatoms
+         var snrg //energy due to substrate
+         var fnrg //energy due to fudge atoms (after SK transition)
+         var gnrg //energy due to guard sites
+         var agbs //bond strength of adatoms to guard sites
+         anrg = 0 //set energies to zero initially
+         snrg = 0
+         fnrg = 0
+         gnrg = 0
+         agbs = 0
+         if( p > -1 && p < 29) // if the site is in the region between the guard atoms, set its energy to something other than zero
+         {
+            if(Number(aabs) < Number(asbs)) // agbs is equal to the smaller of aabs/asbs
+            {
+               agbs = Number(aabs)
+            }
+            else
+            {
+               agbs = Number(asbs)
+            }
+            if(transformed == true) //if the SK transition has happened..
+            {
+               agbs = afbs //guard bond strength is equal to the bond strength to the fudge atoms - makes it neutrally favorable for islands to nucleate 'on the sides'
+			   //console.log("11")
+               fnrg = afbs * neighbours(p,q,3) + 0.3 * afbs * secondneighbours(p,q,3) + 0.1 * afbs * thirdneighbours(p,q,3)
+            }
+            snrg = Number(asbs) * neighbours(p,q,1) + 0.3 * Number(asbs) * secondneighbours(p,q,1) + 0.1 * Number(asbs) * thirdneighbours(p,q,1) //fairly arbitary rules
+            anrg = Number(aabs) * neighbours(p,q,2) + 0.3 * Number(aabs) * secondneighbours(p,q,2) + 0.1 * Number(aabs) * thirdneighbours(p,q,2) //
+            fnrg = afbs * neighbours(p,q,3) + 0.3 * afbs * secondneighbours(p,q,3) + 0.1 * afbs * thirdneighbours(p,q,3) 
+            gnrg = agbs * neighbours(p,q,4) + 0.3 * agbs * secondneighbours(p,q,4) + 0.1 * agbs * thirdneighbours(p,q,4)
+         }
+         energy[p][q] = Number(snrg) + Number(anrg) + Number(fnrg) + Number(gnrg)//energy associated with lattice site p,q, simply add energies up
+      }
+      //////////////////////////////////////////////////////////
+      function recalcall() //recalculates energy in all lattice sites
+      {
+	  //console.log("recalcALL")
+         for (p = -2; p<= 31; p++)         {
+            for (q = 0; q<= 13; q++)            {
+               recalc(p,q)
+            }
+         }
+      }
+	  
+  
+      //////////////////////////////////////////////////////////
+      function isEven(num) //determines if a number is odd or even, used to determine what row atoms are on
+      {
+          if(num % 2 == 0)           {
+            return true;
+         }     else          {
+            return false;
+         }
+      }
+      //////////////////////////////////////////////////////////
+     //////////////////////////////////////////////////////////
+      function gogo()      {
+         document.getElementById("menuholder").style.visibility = "hidden";      //makes things invisible that aren't part of the simulation
+         document.getElementById("back").style.visibility = "hidden";   
+         atombucket = scr            //number of atoms to be deposited equals the value of the relevant scrollbar
+         document.getElementById("pause").style.visibility = "visible"; //yep   
+         critical = 20               //if strain is less than 0.3, critical will be 20(thus SK impossible to achieve)
+         if(strain >= 0.3)          {  //critical is the number of rows that have to be deposited to transition from monolayer to islnad growth         
+            critical = 3
+         }
+         if(strain >= 0.6)          {
+            critical = 2
+         }
+         if(strain >= 0.9)          {
+            critical = 1
+         }
+         var expfactor;
+         expfactor = (((celcius -0.65)/0.15)-1); //http://www.wolframalpha.com/input/?i=plot++y+%3D+exp%28%28%28x-0.6%29%2F0.2%29-1%29+from+0.2+to+0.8
+  
+         var onenormalized; //this is the temperature normalized such that the maximum possible value yields a value of 1
+         onenormalized = Math.exp(expfactor); //clever maths, see wolfram plot above
+         temperature = onenormalized * 100; //i use this in the diffusion rules, a value between 100 * exp(-4) and 100
+         waiting = false; //used in the delay between adatom drops
+         initaabs = Number(aabs); //the inital adatomadatom bind strength. This remains unaltered if i alter aabs with the fudgetransform()
+         firstanrg = Number(aabs);            //energies associated with having an adatom as a first, second, or third nearest neighbour
+         secondanrg = 0.3 * Number(aabs);         //used to make a sneaky correction when checking energies of surrounding sites
+         thirdanrg = 0.1 * Number(aabs);
+         //drawaatom();   
+		 deposit();                //draws an adatom, sets things in motion
+      }
+      //////////////////////////////////////////////////////////
+
+      //////////////////////////////////////////////////////////
+      function deposit()       {
+         document.getElementById(aatom[aindex]).p = Math.ceil(Math.random()*28); // easy way to get a random integer from 1 to 26 inclusive - this is the x lattice co-ordinate
+         document.getElementById(aatom[aindex]).q = 1 //atoms spawn on the top layer, naturally
+        
+	 // console.log(" deposit p="+document.getElementById(aatom[aindex]).p+" iDx="+aindex )
+	   updateatom(aindex) //calls updateatom, which places the atom in the correct place onscreen.
+         		 
+	 	 blossomtimer.pause();
+		 blossomtimer.play()  //starts the timer that 'ticks' and makes things happen
+      }
+      //////////////////////////////////////////////////////////
+      function falling() //called in blossom() on every tick, makes the atom falling move an increment down
+      {
+	  //console.log("falling aindex="+aindex+" q="+document.getElementById(aatom[aindex]).q+" p="+document.getElementById(aatom[aindex]).p)
+         var angle //angle that the atom falls at, in degrees
+         var anglerad //same in radians
+         var aoffset //familar concept, moves even rows left 10 pixels
+         aoffset = 0
+         if(Number(document.getElementById(aatom[aindex]).q) == 1) //if an atom has just been spawned, give it a new angle to fall at
+         {
+            if (Number(document.getElementById(aatom[aindex]).p) == 1) //these special cases ensure the atoms don't interfere with my guard sites
+            {
+               angle = -5 // -10 to 10 degrees, then into radians (Math.random() * 20)
+            }
+            else if (Number(document.getElementById(aatom[aindex]).p) == 26)
+            {
+               angle = 10//(Math.random() * 20) - 10
+            }
+            else
+            {
+               angle =(Math.random() * 20) - 10 //random angle (in degrees) between +10(right) and -10(left)
+            }
+            anglerad = (angle/360) * 2 * Math.PI //convert degrees to radians
+            fallingacross = Math.tan(anglerad) * root3 * aradius //the number of pixels moved in the x direction per tick
+         }
+		// console.log("sum="+((Number(neighbours(document.getElementById(aatom[aindex]).p, document.getElementById(aatom[aindex]).q, 1)) + Number(neighbours(document.getElementById(aatom[aindex]).p, document.getElementById(aatom[aindex]).q, 2)) + Number(neighbours(document.getElementById(aatom[aindex]).p, document.getElementById(aatom[aindex]).q, 3)) == 0)))
+         if(Number(neighbours(document.getElementById(aatom[aindex]).p, document.getElementById(aatom[aindex]).q, 1)) + Number(neighbours(document.getElementById(aatom[aindex]).p, document.getElementById(aatom[aindex]).q, 2)) + Number(neighbours(document.getElementById(aatom[aindex]).p, document.getElementById(aatom[aindex]).q, 3)) == 0) //if the falling atom has no neighbours
+         {
+            filled[document.getElementById(aatom[aindex]).p][document.getElementById(aatom[aindex]).q] = 0 //atom moves down one q index, and across a few x pixels
+            document.getElementById(aatom[aindex]).q = Number(document.getElementById(aatom[aindex]).q) + 1
+            document.getElementById(aatom[aindex]).setAttribute("cy",((document.getElementById(aatom[aindex]).q-1) * root3 * aradius)+10);
+            if (isEven(document.getElementById(aatom[aindex]).q) == true)    {
+               aoffset = -10
+            }
+            document.getElementById(aatom[aindex]).setAttribute("cx",(Number(document.getElementById(aatom[aindex]).getAttribute("cx")) + Number(fallingacross)));
+            document.getElementById(aatom[aindex]).p = Math.round(Number((document.getElementById(aatom[aindex]).getAttribute("cx")) - aoffset) / (2 * aradius)) + 1; //the p co-ordinate is the nearest lattice site
+		
+     
+            filled[document.getElementById(aatom[aindex]).p][document.getElementById(aatom[aindex]).q] = document.getElementById(aatom[aindex]).f;;
+            if (checkunder(aindex) == true) //if the atom lands cleanly, snap it to the nearest lattice site
+            {
+               updateatom(aindex) //display this onscreen
+            }
+		// console.log("passes neighbiur test aindex="+aindex)
+         }
+         else //if the atom has neighbours...
+         {		 
+             //console.log("falling preaddition inx="+aindex)
+            filled[document.getElementById(aatom[aindex]).p][document.getElementById(aatom[aindex]).q] = 0 //...snap to the nearest atom site
+            if (isEven(document.getElementById(aatom[aindex]).q) == true)            {
+               aoffset = -10
+            }
+            document.getElementById(aatom[aindex]).p = Math.round(((Number(document.getElementById(aatom[aindex]).getAttribute("cx")) - aoffset) / (2 * aradius)) + 1)
+            filled[document.getElementById(aatom[aindex]).p][document.getElementById(aatom[aindex]).q] = document.getElementById(aatom[aindex]).f;;
+            updateatom(aindex)//visualise the atom onscreen
+			if (aindex < atombucket)   {  //either drop another atom, or end the simulation if you've dropped them all
+            	if(transformed == false && completedlayers() >= critical) //check to see is SK island growth should be initiated
+               {
+                  fudgetransform() //SK island growth time
+               }
+               aindex++ 
+			   //console.log("falling idx increase ="+aindex)
+               waiting = true //there is a wait until a new adatom is dropped, currently set to 1ms
+               //diffusewaittimer.play()
+               waiting = false 
+			   //drawaatom()
+			   deposit();
+            }
+            else
+            {
+               endsim() //if no more atoms, end simulation
+            }
+         }
+      }
+
+      //////////////////////////////////////////////////////////
+      function fudgetransform()      {
+         //console.log+("fudge transform")
+         var blackindex
+         blackindex = 1
+         for(var index=1; index <= aindex; index++) //atoms put on the blacklist are not allowed to diffuse (this is a fudge)
+         //e.g. if critical is 3, all atoms in the first 3 rows are turned into fudge atoms and put on the blacklist
+         {
+            if (document.getElementById(aatom[index]).q >=14-critical)            {
+               blacklistArray[blackindex] = index
+               blackindex++
+            }
+         }
+         for(q=13; q >= 14-critical; q = q-1)         {
+            for (p=-2; p<=31;p++)            {
+               filled[p][q] = 3 //turn them into fudge atoms
+            }
+         }
+         afbs = initaabs //bond to the fudge atoms as strongly as the initial bond strength
+         aabs = initaabs * 2 //double the adatom-adatom bond strength for island growth
+         transformed = true
+      }
+      //////////////////////////////////////////////////////////
+      function updateatom(index) {  //Just pust the atom in the correct position onscreen depending on its p,q coordinate 
+         var aoffset = 0
+         var aeven = false
+         aeven = isEven(document.getElementById(aatom[index]).q)
+         if (aeven == true)         {
+            aoffset = -10
+         }          else if(aeven == false)          {
+            aoffset = 0
+         }
+         document.getElementById(aatom[index]).setAttribute("cx", ((Number(document.getElementById(aatom[index]).p)-1) * 2 * aradius + Number(aoffset)));
+         document.getElementById(aatom[index]).setAttribute("cy", ((Number(document.getElementById(aatom[index]).q)-1) * root3 * Number(aradius))+10);
+      }
+      //////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////
+      function blossom()      {
+	  //console.log("blossom waiting="+waiting)
+         if (waiting == false)  { //if not waiting for a new adatom to fall, move current atom down a tick
+         	falling() //falling atom moves down a click
+         }
+         recalcall() //recalculate energy of all sites
+         diffuse() //diffuse a tick
+		 //aindex++;
+		 doBlossomTimer();
+      }
+	  
+	  ///////
+	  // set timers
+		   
+	  function doBlossomTimer() {
+	  //console.log("do blossomtimer")
+	 	 blossomtimer.to("#ptitle", {duration:0, delay:0.001, onComplete:blossom } );
+	  }
+	  
+  	  
+     /*}
+		*/
+      //////////////////////////////////////////////////////////
+      function test()   {//used if i want to trace something on command. I dont right now
+      	 go_sb.enabled = false
+      }
+      //stage.addEventListener(KeyboardEvent.KEY_DOWN,test)
+      //////////////////////////////////////////////////////////
+      function diffuse()   {
+	  //console.log("DIFFUSE")
+         var dindex = 1 //counter used to cycle through all of the atoms
+         var prob = 1 //probabilty of something happening
+         var dice //used to store some random number, then compare it to prob
+         var neighmod //diffusion modifier sue to first nearest neighbour
+         var secondneighmod //diffusion modifier sue to second nearest neighbour
+         var thirdneighmod//diffusion modifier sue to third nearest neighbour
+         var fudgemod //modifier used to make monolayer growth happen nicer ( a fudge)
+         var bestplace = {}; //bestplace[0] = .p of bestplace, likewise besplace[1] is .q, bestplace [2] is the difference in energy
+         var blocked //diffusion blocked if an atom wants to diffuse outside of the guard atoms
+         blocked = false
+         fudgemod = 0
+         for(dindex = 1; dindex <= aindex - 1;dindex++) {//for all adatoms except the one falling      
+            if(transformed == false || blacklistmember(dindex) == false) {//transformed fudge adatoms cannot diffuse  
+			if (document.getElementById(aatom[dindex]).p >31) {
+				document.getElementById(aatom[dindex]).p = 31;
+			  }
+               bestplace = checknrg(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q) //this function finds the most energetically favorable site for an atom to diffuse to
+               if (bestplace[0] >= 29 || bestplace[0] <=-1) {//if an atom 'wants' to diffuse through the guard atoms, it is not allowed               
+                  blocked = true
+               }
+               dice = Math.random()
+               prob = temperature * 0.0001 * bestplace[2] //temperature is up to 100, bestplace[2] is the difference in energy between the current site and the target site
+               if(dice < prob || neighbours(document.getElementById(aatom[dindex]).p, document.getElementById(aatom[dindex]).q, 0) ==6) { //if the dice roll is successful, or if an atom has no neigbours, make it jump to the site it 'wants'               
+                  if(blocked == false)  //unless its blocked                  
+                     filled[document.getElementById(aatom[dindex]).p][document.getElementById(aatom[dindex]).q] = 0 //this just moves the atom.
+                     document.getElementById(aatom[dindex]).p = bestplace[0]
+                     document.getElementById(aatom[dindex]).q = bestplace[1]
+                     filled[document.getElementById(aatom[dindex]).p][document.getElementById(aatom[dindex]).q] = document.getElementById(aatom[dindex]).f;
+                     updateatom(dindex)
+                  }
+               }
+                  ///////////////////////////////////////////////////////
+               dice = Math.random() //roll the dice again - this time to see if an atom diffuses one square left or right
+              neighmod = Math.pow((1 - (aabs * 0.01)), neighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q, 2)) * Math.pow((1 - (asbs * 0.01)), neighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q,1)) * Math.pow((1 - (aabs * 0.01 * skmod)), neighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q, 3))
+              secondneighmod = Math.pow(Math.pow((1 - (aabs * 0.01)), secondneighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q, 2)) * Math.pow((1 - (asbs * 0.01)), secondneighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q,1)) * Math.pow((1 - (aabs * 0.01 * skmod)), secondneighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q, 3)), 0.5)
+              thirdneighmod = Math.pow(Math.pow((1 - (aabs * 0.01)), thirdneighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q, 2)) * Math.pow((1 - (asbs * 0.01)), thirdneighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q,1)) * Math.pow((1-(aabs * 0.01 * skmod)), thirdneighbours(document.getElementById(aatom[dindex]).p,document.getElementById(aatom[dindex]).q,3)), 0.25)
+                  if(transformed == false)    {                    
+                     if (document.getElementById(aatom[dindex]).q <= 12-completedlayers()) {  //this modifier makes it more likely for an adatom to be nudged left or right if monolayer growth is expected. makes things nicer                     
+                        if(Number(asbs)>Number(aabs))   {                        
+                           fudgemod = (Number(asbs)-Number(aabs)) * 0.001 //degree of this fusge is dependent on how much bigger asbs is than aabs
+                        }
+                     }
+                  }
+               prob = (temperature * 0.01 * neighmod * secondneighmod * thirdneighmod) * 5 + fudgemod //some arbitary but seemingly effective way of calculating a probability
+               if (dice < prob) {   //if dice roll succesfful               
+                  if(checkleft(dindex) == false && checkright(dindex) ==false) //if atom is free to diffuse either side, choose a side at random
+                  {
+                     dice = Math.round(Math.random())
+                     dice = (dice*2-1)
+                     filled[document.getElementById(aatom[dindex]).p][document.getElementById(aatom[dindex]).q] = 0
+                     filled[Number(document.getElementById(aatom[dindex]).p)+ Number(dice)][document.getElementById(aatom[dindex]).q] = document.getElementById(aatom[dindex]).f;
+                     document.getElementById(aatom[dindex]).p = Number(document.getElementById(aatom[dindex]).p) + Number(dice)
+                     updateatom(dindex)
+                  }   else if(checkleft(dindex) == true && checkright(dindex) ==false) {  //if only the right side is available to diffuse into, do that                  
+                     dice = 1
+                     filled[document.getElementById(aatom[dindex]).p][document.getElementById(aatom[dindex]).q] = 0
+                     filled[Number(document.getElementById(aatom[dindex]).p)+ Number(dice)][document.getElementById(aatom[dindex]).q] = document.getElementById(aatom[dindex]).f;
+                     document.getElementById(aatom[dindex]).p = Number(document.getElementById(aatom[dindex]).p) + Number(dice)
+                     updateatom(dindex)
+                  }  else if(checkleft(dindex) == false && checkright(dindex) ==true) {  //same with the left side
+                  	dice = -1
+                     filled[document.getElementById(aatom[dindex]).p][document.getElementById(aatom[dindex]).q] = 0
+                     filled[Number(document.getElementById(aatom[dindex]).p)+ Number(dice)][document.getElementById(aatom[dindex]).q] = document.getElementById(aatom[dindex]).f;
+                     document.getElementById(aatom[dindex]).p = document.getElementById(aatom[dindex]).p + Number(dice)
+                     updateatom(dindex)
+                  }
+               }
+         }
+         //displayfilled() //un-comment out this function below for code diagnostics
+      }
+      //////////////////////////////////////////////////////////
+      function endsim() //ends simulaton once all of the atoms in atombucket have been deposited
+      {
+		 blossomtimer.pause();
+         document.getElementById("pause").style.visibility = "hidden";
+         document.getElementById("restart_btn").style.visibility = "visible";
+        // endcount = 1
+        // doendtimer(); //lets the simulation run for 20 ticks after the last atom has landed
+      }
+      //////////////////////////////////////////////////////////
+      function endblossom()   {   //lets the simulation run for 20 ticks after the last atom has landed
+			blossomtimer.pause();
+      }
+      
+    
+      //////////////////////////////////////////////////////////
+      function checknrg(p,q) //this function checks the first, second and third nearest neighbours of a site (p,q) and returns the location of the most energetically favorable site...
+      //... and the difference in energy between (p,q) and the most energetically favorable nearby site
+      {
+         var maxnrg = {};
+         var difference
+         maxnrg = [p,q,0]
+         if((energy[Number(p)][Number(q)-1]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[p][Number(q)-1] == 0)
+		 {maxnrg[0] = Number(p);maxnrg[1] = Number(q)-1;} //formatted into one line to save oodles of space. easy to see whats going on if you reformat a line using indentation and returns
+         if((energy[Number(p)][Number(q)+1]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[p][Number(q)+1] == 0){maxnrg[0] = p;maxnrg[1] = Number(q)+1;}
+         if((energy[Number(p)-1][q]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-1][q] == 0){maxnrg[0] = Number(p)-1;maxnrg[1] = q;}
+         if((energy[Number(p)+1][q]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+1][q] == 0){maxnrg[0] = Number(p)+1;maxnrg[1] = q;}
+         if((energy[Number(p)][Number(q)-2]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[p][Number(q)-2] == 0){maxnrg[0] =Number(p);maxnrg[1] = Number(q)-2;}
+         if((energy[Number(p)][Number(q)+2]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[p][Number(q)+2] == 0){maxnrg[0] = Number(p);maxnrg[1] = Number(q)+2;}
+         if((energy[Number(p)-2][q]-thirdanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-2][q] == 0){maxnrg[0] = Number(p)-2;maxnrg[1] = q;}
+         if((energy[Number(p)+2][q]-thirdanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+2][q] == 0){maxnrg[0] = Number(p)+2;maxnrg[1] = q;}
+         if((energy[Number(p)+1][Number(q)-2]-thirdanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+1][Number(q)-2] == 0){maxnrg[0] = Number(p)+1;maxnrg[1] = Number(q)-2;}
+         if((energy[Number(p)-1][Number(q)-2]-thirdanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-1][Number(q)-2] == 0){maxnrg[0] = Number(p)-1;maxnrg[1] = Number(q)-2;}
+         if((energy[Number(p)+1][Number(q)+2]-thirdanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+1][Number(q)+2] == 0){maxnrg[0] = Number(p)+1;maxnrg[1] = Number(q)+2;}
+         if((energy[Number(p)-1][Number(q)+2]-thirdanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-1][Number(q)+2] == 0){maxnrg[0] = Number(p)-1;maxnrg[1] = Number(q)+2;}
+         if (isEven(q) == true)
+         {
+            if((energy[Number(p)-1][Number(q)-1]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-1][Number(q)-1] == 0){maxnrg[0] = Number(p)-1;maxnrg[1] = Number(q)-1;}
+            if((energy[Number(p)-1][Number(q)+1]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-1][Number(q)+1] == 0){maxnrg[0] = Number(p)-1;maxnrg[1] = Number(q)+1;}
+            if((energy[Number(p)-2][Number(q)-1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-2][Number(q)-1] == 0){maxnrg[0] = Number(p)-2;maxnrg[1] = Number(q)-1;}
+            if((energy[Number(p)+1][Number(q)-1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+1][Number(q)-1] == 0){maxnrg[0] = Number(p)+1;maxnrg[1] = Number(q)-1;}
+            if((energy[Number(p)-2][Number(q)+1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-2][Number(q)+1] == 0){maxnrg[0] = Number(p)-2;maxnrg[1] = Number(q)+1;}
+            if((energy[Number(p)+1][Number(q)+1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+1][Number(q)+1] == 0){maxnrg[0] = Number(p)+1;maxnrg[1] = Number(q)+1;}
+         }
+         else
+         {
+            if((energy[Number(p)+1][Number(q)-1]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+1][Number(q)-1] == 0){maxnrg[0] = Number(p)+1;maxnrg[1] = Number(q)-1;}
+            if((energy[Number(p)+1][Number(q)+1]-firstanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+1][Number(q)+1] == 0){maxnrg[0] = Number(p)+1;maxnrg[1] = Number(q)+1;}
+            if((energy[Number(p)-1][Number(q)-1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-1][Number(q)-1] == 0){maxnrg[0] = Number(p)-1;maxnrg[1] = Number(q)-1;}
+            if((energy[Number(p)+2][Number(q)-1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+2][Number(q)-1] == 0){maxnrg[0] = Number(p)+2;maxnrg[1] = Number(q)-1;}
+            if((energy[Number(p)-1][Number(q)+1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)-1][Number(q)+1] == 0){maxnrg[0] = Number(p)-1;maxnrg[1] = Number(q)+1;}
+            if((energy[Number(p)+2][Number(q)+1]-secondanrg) > energy[maxnrg[0]][maxnrg[1]]&& filled[Number(p)+2][Number(q)+1] == 0){maxnrg[0] = Number(p)+2;maxnrg[1] = Number(q)+1;}
+         }
+         difference = energy[maxnrg[0]][maxnrg[1]] - energy[p][q]
+         maxnrg[2] = difference
+         return maxnrg
+      }
+      //////////////////////////////////////////////////////////
+      function displayfilled() //uncomment this to see a visualisation of the 'filled' array. causes alot of lag, used for code diagnostics
+      {
+		 
+      }
+      ////////////////////////////////////////////////////////////
+      function checkunder(index) //used to determine how a falling atom lands - cleanly stacking or just clipping another atom
+      {
+         var underfilled
+         underfilled = false
+         var aeven
+         aeven = isEven(document.getElementById(aatom[index]).q)
+         if (aeven == true) //this loop checks to see if the two sites below the falling atom are filled - if so, stop the atom falling
+                        //there are 2 loops because the atom needs to check different sites depending on row parity
+         {
+            if ((filled[Number(document.getElementById(aatom[index]).p)-1][Number(document.getElementById(aatom[index]).q)+1]) >0)            {
+               if ((filled[Number(document.getElementById(aatom[index]).p)][Number(document.getElementById(aatom[index]).q)+1]) >0)               {
+                  underfilled = true
+               }
+            }
+         }         else if(aeven == false)         {
+            if ((filled[Number(document.getElementById(aatom[index]).p)][Number(document.getElementById(aatom[index]).q)+1]) >0)            {
+               if ((filled[Number(document.getElementById(aatom[index]).p)+1][Number(document.getElementById(aatom[index]).q)+1]) >0)               {
+                  underfilled = true
+               }
+            }
+         }
+         if (underfilled == true)         {
+            return true
+         }         else         {
+            return false
+         }
+      }
+      //////////////////////////////////////////////////////////
+      function checkleft(index) //checks to see if the site to the left of aatom[index] is filled
+      {
+         if(filled[Number(document.getElementById(aatom[index]).p) - 1][Number(document.getElementById(aatom[index]).q)] > 0)         {
+            return true
+         }         else         {
+            return false
+         }
+      }
+      //////////////////////////////////////////////////////////
+      function checkright(index) //checks to see if the site to the left of aatom[index] is filled
+      {
+         if(filled[Number(document.getElementById(aatom[index]).p) + 1][Number(document.getElementById(aatom[index]).q)] > 0)         {
+            return true
+         }         else         {
+            return false
+         }
+      }
+      //////////////////////////////////////////////////////////
+      function thirdneighbours(p,q,atomno) //counts the third nearest neighbours of filled index 'atomno' of site (p,q)
+      {
+	  //console.log("neighbours p="+p+" q="+q+" qtnim="+atomno)
+         var count
+         count = 0
+         if (filled[Number(p)-2][q] == atomno)         {
+            count ++
+         }
+         if (filled[Number(p)+2][q] == atomno)         {
+            count ++
+         }
+         if (filled[Number(p)+1][Number(q)-2] == atomno)         {
+            count ++
+         }
+         if (filled[Number(p)-1][Number(q)-2] == atomno)         {
+            count ++
+         }
+         if (filled[Number(p)+1][Number(q)+2] == atomno)         {
+            count ++
+         }
+         if (filled[Number(p)-1][Number(q)+2] == atomno)         {
+            count ++
+         }
+         return count
+      }
+      //////////////////////////////////////////////////////////
+      function secondneighbours(p,q, atomno) //counts the second nearest neighbours of filled index 'atomno' of site (p,q)
+      {
+         var count
+         count = 0
+         if (filled[p][q-2] == atomno)         {
+            count ++
+         }
+         if (filled[p][q+2] == atomno)         {
+            count ++
+         }
+         if (isEven(q) == true)         {
+            if (filled[Number(p)-2][Number(q)-1] == atomno)            {
+            count ++
+            }
+            if (filled[Number(p)+1][Number(q)-1] == atomno)            {
+            count ++
+            }
+            if (filled[Number(p)-2][Number(q)+1] == atomno)            {
+            count ++
+            }
+            if (filled[Number(p)+1][Number(q)+1] == atomno)            {
+            count ++
+            }
+         }
+         else
+         {
+            if (filled[Number(p)-1][Number(q)-1] == atomno)            {
+            count ++
+            }
+            if (filled[Number(p)+2][Number(q)-1] == atomno)            {
+            count ++
+            }
+            if (filled[Number(p)-1][Number(q)+1] == atomno)            {
+            count ++
+            }
+            if (filled[Number(p)+2][Number(q)+1] == atomno)            {
+            count ++
+            }
+         }
+         return count
+      }
+      //////////////////////////////////////////////////////////
+      function neighbours(np,nq,atomno) {  //counts the first nearest neighbours of filled index 'atomno' of site (p,q)   
+         //console.log("first neighbours np="+np+" nq="+nq+" atnum="+atomno)
+		 // console.log("first neighbours np="+np)
+		 var count
+         count = 0
+         if (filled[Number(np)][Number(nq)-1] == atomno)         {
+            count ++
+         }
+         if (filled[Number(np)-1][Number(nq)] == atomno)         {
+            count ++
+         }
+         if (filled[Number(np)+1][Number(nq)] == atomno)         {
+            count ++
+         }
+         if (filled[Number(np)][Number(nq)+1] == atomno)         {
+            count ++
+         }
+         if (isEven(nq) == true)         {
+            if (filled[Number(np)-1][Number(nq)-1] == atomno)            {
+               count ++
+            }
+            if (filled[Number(np)-1][Number(nq)+1] == atomno)            {
+               count ++
+            }
+         }     else      {
+            if (filled[Number(np)+1][Number(nq)-1] == atomno)            {
+               count ++
+            }
+            if (filled[Number(np)+1][Number(nq)+1] == atomno)            {
+               count ++
+            }
+         }
+         return count
+      }
+      //////////////////////////////////////////////////////////
+      function completedlayers() //counts the number of layers that are entirely completed
+      {
+         var count
+         count = 0
+         for(q=1; q<= 13; q++)          {
+            if(checklayer(q) ==true)             {
+               count ++
+            }
+         }
+         return count
+      }
+      //////////////////////////////////////////////////////////
+      function checklayer(q)//checks to see if layer (q) is entirely completed
+      {
+         var layerfilled 
+         layerfilled = true
+         for(p=0; p<=28; p++)          {
+            if (filled[p][q] == 0)             {
+               layerfilled = false
+            }
+         }
+         return layerfilled
+      }
+      //////////////////////////////////////////////////////////
+      function blacklistmember(index) //checks to see if aatom[index] is on the blacklist (and thus is not allowed to diffuse)
+      {
+         var p
+         var member = Boolean
+         member = false
+   for(p=0; p<= blacklistArray.length; p++)         {
+   if(blacklistArray[p] == index)         {
+               member = true
+            }
+         }
+         return member
+      }
+
+
+</script>
+    </div>
+    <div class="payj" id="p3"> 
+      <div id="ptitle">Epitacisl growth</div>
+      <div id="txt1">try this one epitaxy (MBE).</div>
+      <div id="nav"> 
+        <p class="dbutton" id="back" onClick="gotoPage(1)"></p >
+      </div>
+    </div>
+    <!--  <!-- end payj - p2 -->
+  </div>
+</div>
+  <!-- kanvas -->
+</div>
+<!-- container -->
+
+	</body>
+</html>
