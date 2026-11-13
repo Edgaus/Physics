@@ -1,0 +1,6 @@
+__pycache__/
+.venv/
+*.pyc
+~$*.docx
+*.opj.bak
+Thumbs.db
