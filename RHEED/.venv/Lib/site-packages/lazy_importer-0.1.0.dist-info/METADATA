@@ -1,0 +1,174 @@
+Metadata-Version: 2.4
+Name: lazy-importer
+Version: 0.1.0
+Summary: A context manager for portable, opt-in lazy imports
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-Expression: Apache-2.0
+License-File: LICENSE
+
+# lazy-importer
+
+A backwards-compatibility shim allowing libraries to get lazy import semantics
+similar to [PEP 810](https://peps.python.org/pep-0810/) automatically in Python
+3.11+ without needing to set your minimum version to 3.15. In Python 3.15+,
+this falls back to the standard lazy imports mechanism.
+
+## Usage
+
+Install from a checkout with `python -m pip install .`:
+
+```python
+from lazy_importer import lazy_importer
+
+__lazy_modules__ = {"json", "pathlib"}
+
+with lazy_importer():
+    import json
+    from pathlib import Path
+
+
+# Importing this module doesn't load json or pathlib for these statements.
+def read_config(filename: str) -> object:
+    return json.loads(Path(filename).read_text(encoding="utf-8"))
+```
+
+`__lazy_modules__` determines which imports are lazy. On Python 3.11–3.14, the
+context enables the fallback, which checks the importing module's declaration
+at each import. On Python 3.15+, Python reads the declaration directly and the
+context is a no-op, leaving native controls and filtering in effect without
+loading the fallback implementation. Without a declaration, imports remain
+eager under the default interpreter settings.
+
+`__lazy_modules__` contains the names of the modules whose imports should be
+lazy. For a `from` import, the selected module is the one after `from`:
+
+| Import statement | Entry in `__lazy_modules__` |
+| --- | --- |
+| `import example.child` | `"example.child"` |
+| `from example import child` | `"example"` |
+| `from example.child import value` | `"example.child"` |
+| `from .child import value` (inside `example`) | `"example.child"` |
+| `from . import child` (inside `example`) | `"example"` |
+
+With a set of names, selecting `"example"` doesn't also select imports of
+`"example.child"`. This is also how PEP 810's `__lazy_modules__` works.
+
+Both paths check membership in `__lazy_modules__` at each import, so changes to
+the declaration take effect within an active context. A custom container can
+select names through `__contains__` without supporting iteration. An empty or
+absent declaration selects no imports.
+
+Each call to `lazy_importer()` creates a context. The fallback context can
+only be entered once, so separate `with` blocks need separate calls even if they
+use the same selection. This is why the example calls `lazy_importer` in the
+`with` statement rather than storing the context for reuse.
+
+## When imports run
+
+In the example above, importing your module does not load `json` or `pathlib` on
+behalf of those statements. Calling `read_config()` loads them when it reaches
+the operations that need them. Any side effects of their initialization, such
+as registering plugins or configuring logging, are delayed along with the
+import. A module imported only for its side effects therefore needs an eager
+import, or an explicit call to `resolve()` to trigger initialization.
+
+Import failures are delayed too. If one of the selected modules is missing or
+raises an exception during initialization, that exception reaches the code that
+first uses it. A `try`/`except` around the import block is therefore not a
+portable way to check whether an optional dependency is available. After a
+failed import, another use can retry it.
+
+Once loading starts, the module's own imports run normally unless it opts into
+lazy imports itself. The package uses the import hooks and search path in effect
+at first use, so changes to the import environment between declaration and use
+can affect what gets loaded. With `from module import first, second`, loading
+`first` does not resolve the binding for `second`; each imported name is resolved
+when it is needed.
+
+## Differences from PEP 810
+
+On Python 3.15+, Python handles lazy imports directly. On older runtimes,
+`lazy-importer` approximates that behavior with proxy objects, which can forward
+operations to the imported object but cannot intercept ordinary variable reads.
+This is the main source of differences between the two.
+
+Native lazy imports resolve when you read the imported name. The fallback waits
+for an operation such as attribute access or a call, so assigning the name to
+another variable or putting it in a container can retain a proxy:
+
+```python
+from lazy_importer import lazy_importer, resolve
+
+__lazy_modules__ = {"decimal"}
+with lazy_importer():
+    from decimal import Decimal
+
+classes = [Decimal]
+print(type(classes[0]) is type)  # False on the fallback; True with native imports.
+classes[0] = resolve(classes[0])
+print(type(classes[0]) is type)  # True on both.
+```
+
+`resolve(value)` returns the real object, loading it if necessary, and returns
+ordinary objects unchanged. This makes it useful at boundaries where identity
+or type matters, including exception matching, serialization and extension
+code that requires a concrete object. Resolving a fallback proxy updates the
+module globals that still refer to it, but a container holding the proxy keeps
+that reference until you replace it, as in the example.
+
+Reading another module's attributes has the same limitation: if a module
+imports `Decimal` lazily, `other_module.Decimal` can return a proxy on the
+fallback, whereas native attribute access resolves the import. Protocol checks
+can also see the proxy's methods rather than the real object's capabilities:
+
+```python
+from lazy_importer import lazy_importer, resolve
+
+__lazy_modules__ = {"math"}
+with lazy_importer():
+    from math import pi
+
+print(callable(pi))  # True on the fallback; False with native imports.
+print(callable(resolve(pi)))  # False on both.
+```
+
+There is also a difference in the scope of the selection. The fallback acts on
+imports made while the context is active on the current thread, including
+imports in functions called from the block. Native `__lazy_modules__` does not
+make function-local imports lazy:
+
+```python
+from lazy_importer import lazy_importer
+
+__lazy_modules__ = {"decimal"}
+
+
+def load_decimal():
+    import decimal
+
+    return decimal
+
+
+with lazy_importer():
+    module = load_decimal()  # A proxy on the fallback; a real module on 3.15+.
+```
+
+A module-level block containing only import statements avoids this difference.
+The fallback also does not enforce the native restrictions on lazy imports in
+class bodies or `try` blocks. If a context spans a `yield` or `await`, other code
+running on that thread can have its imports deferred according to its own
+module's declaration. Entering a context doesn't enable the fallback on other
+threads. Nested contexts keep it active until the outermost context exits.
+
+Native controls and filtering, `sys.lazy_modules`, and exception chaining back
+to the import declaration are not provided on older runtimes.
+
+While active, the fallback temporarily replaces `builtins.__import__` and
+preserves any pre-existing hook. Code that replaces the same hook during a
+context can interfere with lazy selection; if that happens, exiting the context
+leaves the replacement in place. No proxy is inserted into `sys.modules`.
+
+The package has no runtime dependencies. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for testing and build instructions.
+
