@@ -1,3 +1,14 @@
+<<<<<<< HEAD
+=======
+# Este es un archivo Python para poder simular patrones RHEED
+# Pero primero estamos simulando como se ve una red cristalina en 2d
+
+"""
+Bosquejo Dash: pantalla 1:2 con margen.
+Izquierda = Parámetros | Derecha = Plotly
+"""
+
+>>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
 from dash import Dash, Input, Output, State, dcc, html
 from dash.exceptions import PreventUpdate
 from dash import no_update
@@ -34,6 +45,10 @@ app.layout = html.Div(
         "fontFamily": "system-ui, sans-serif",
     },
     children=[
+<<<<<<< HEAD
+=======
+        # PANEL IZQUIERDO (1/3)
+>>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
         html.Div(
             style={
                 "flex": "1",
@@ -107,6 +122,7 @@ app.layout = html.Div(
                         "fontWeight": "bold",
                     },
                 ),
+<<<<<<< HEAD
                 # Debajo del botón "Actualizar Simulación":
                 html.Hr(),
                 html.H4("Vectores primitivos", style={"marginBottom": "4px"}),
@@ -126,11 +142,29 @@ app.layout = html.Div(
             style={"flex": "2", "border": "3px solid #e11", "padding": "8px"},
             children=[
                 dcc.Graph(id="plot", figure=figura_vacia(), style={"height": "100%"})
+=======
+            ],
+        ),
+        # PANEL DERECHO (2/3)
+        html.Div(
+            style={"flex": "2", "border": "3px solid #e11", "padding": "8px"},
+            children=[
+                dcc.Graph(
+                    id="plot",
+                    figure=figura_vacia(),
+                    style={"height": "100%"},
+                )
+>>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
             ],
         ),
     ],
 )
 
+<<<<<<< HEAD
+=======
+
+# Callback 1: Habilitar/deshabilitar barras según la red elegida
+>>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
 @app.callback(
     Output("info-vectores", "children"),
     Input("tipo-red-2d", "value"),
