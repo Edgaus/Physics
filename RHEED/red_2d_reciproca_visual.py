@@ -200,20 +200,30 @@ def mostrar_vectores(geometria, a, b):
         ]
 
     if geometria == "HEX":
+        con_a = 2 * np.pi / a
         return [
-            html.H4("Espacio real"),
-            html.Div(f"Red hexagonal ($a={a:.3f}\\,\\mathrm{{Å}}$)"),
-            linea(f"$$\\mathbf{{a}}_1 = [{a:.3f},\\,0]\\,\\mathrm{{Å}}$$"),
-            linea(
-                f"$$\\mathbf{{a}}_2 = [{0.5 * a:.3f},\\,{a * 3**0.5 / 2:.3f}]\\,\\mathrm{{Å}}$$"
-            ),
-            linea(r"$$\gamma = 120^\circ$$"),
-            html.H4("Espacio recíproco"),   
-            linea(
-                r"$$\mathbf{b}_2 = \frac{2\pi}{a}\left(0,\frac{2}{\sqrt{3}}\right)$$"
-            ),
-            linea(r"$$\gamma^* = 60^\circ$$"),
-        ]
+        html.H4("Espacio real"),
+        html.Div(f"Red hexagonal ($a={a:.3f}\\,\\mathrm{{Å}}$)"),
+        linea(
+            f"$$\\mathbf{{a}}_1 = a[1,0,0] = "
+            f"[{a:.3f},\\,0,\\,0]\\,\\mathrm{{Å}}$$"
+        ),
+        linea(
+            f"$$\\mathbf{{a}}_2 = \\frac{{a}}{{2}}[ -1, \\sqrt{{3}},0 ] = "
+            f"[{-0.5 * a:.3f},\\,{a * np.sqrt(3) / 2:.3f},\\,0]\\,\\mathrm{{Å}}$$"
+        ),
+        linea(r"$$\gamma = 120^\circ$$"),
+        html.H4("Espacio recíproco"),
+        linea(
+            f"$$\\mathbf{{b}}_1 = \\frac{{2\\pi}}{{a}}\\left[1,\\frac{{1}}{{\\sqrt{{3}}}},0\\right] = "
+            f"[{con_a:.3f},\\,{con_a / np.sqrt(3):.3f},\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
+        ),
+        linea(
+            f"$$\\mathbf{{b}}_2 = \\frac{{2\\pi}}{{a}}\\left[0,\\frac{{2}}{{\\sqrt{{3}}}},0\\right] = "
+            f"[0,\\,{2 * con_a / np.sqrt(3):.3f},\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
+        ),
+        linea(r"$$\gamma^* = 60^\circ$$"),
+    ]
 
     if geometria == "CENT":
         con_a = 2*np.pi/a
@@ -317,12 +327,12 @@ def update_plot(n_clicks, geometria, dato1, dato2, b1range, b2range):
     if not n_clicks:
         raise PreventUpdate
 
-    a = 1.0 if not dato1 else float(dato1)
+    a = 3.0 if not dato1 else float(dato1)
     b = a if not dato2 else float(dato2)
-    n1 = 5 if not b1range else int(b1range)
-    n2 = 5 if not b2range else int(b2range)
+    nx = 5 if not b1range else int(b1range)
+    ny = 5 if not b2range else int(b2range)
 
-    return rr.calculadora(geometria, a, b, datax=(-n1, n1), datay=(-n2, n2))
+    return rr.calculadora(geometria, a, b,  nx, ny)
 
 
 if __name__ == "__main__":
