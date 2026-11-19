@@ -31,12 +31,12 @@ def calculadora(Simetria, a, b, datax, datay):
         x=xs, y=ys,
         mode="markers",
         marker=dict(size=8, color="#0f3d3e"),
-        name="RECT",
+        name=Simetria,
     ))
     fig.update_layout(
         xaxis=dict(range=[-datax, datax], scaleanchor="y", scaleratio=1, title="x"),
         yaxis=dict(range=[-datay, datay], title="y"),
         uirevision="rheed",
-        title="Red rectangular",
+        title=f"Red {Simetria}",
     )
     return fig
