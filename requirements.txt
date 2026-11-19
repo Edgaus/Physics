@@ -1,0 +1,13 @@
+# Scientific Python stack for the Physics repo, including the RHEED
+# kinematic (cinematic) phosphor-screen model. No physics code here —
+# package versions only.
+numpy>=2.0
+scipy>=1.14
+sympy>=1.13
+matplotlib>=3.9
+pandas>=2.2
+pillow>=10.0
+ipython>=8.0
+ipykernel>=6.29
+jupyter>=1.0
+notebook>=7.0
