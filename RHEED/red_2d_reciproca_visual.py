@@ -1,21 +1,40 @@
-<<<<<<< HEAD
-=======
-# Este es un archivo Python para poder simular patrones RHEED
-# Pero primero estamos simulando como se ve una red cristalina en 2d
-
-"""
-Bosquejo Dash: pantalla 1:2 con margen.
-Izquierda = Parámetros | Derecha = Plotly
-"""
-
->>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
-from dash import Dash, Input, Output, State, dcc, html
+from dash import Dash, Input, Output, State, dcc, html, no_update
 from dash.exceptions import PreventUpdate
-from dash import no_update
 import plotly.graph_objects as go
 import redreciproca as rr
+import numpy as np
 
 app = Dash(__name__)
+
+app.index_string = """
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <script>
+        window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+            displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+          },
+          svg: {fontCache: 'global'}
+        };
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+"""
 
 
 def figura_vacia():
@@ -35,6 +54,10 @@ def figura_vacia():
     return fig
 
 
+def linea(tex):
+    return html.Div(tex, style={"margin": "8px 0"})
+
+
 app.layout = html.Div(
     style={
         "margin": "24px",
@@ -45,10 +68,7 @@ app.layout = html.Div(
         "fontFamily": "system-ui, sans-serif",
     },
     children=[
-<<<<<<< HEAD
-=======
-        # PANEL IZQUIERDO (1/3)
->>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
+        dcc.Store(id="mathjax-tick"),
         html.Div(
             style={
                 "flex": "1",
@@ -67,7 +87,7 @@ app.layout = html.Div(
                     options=[
                         {"label": "Hexagonal", "value": "HEX"},
                         {"label": "Rectangular / Cuadrada", "value": "RECT"},
-                        {"label": "Centrada en Caras", "value": "CENT"},
+                        {"label": "Cuadrado Centrada en Caras", "value": "CENT"},
                     ],
                     value="HEX",
                     clearable=False,
@@ -83,10 +103,7 @@ app.layout = html.Div(
                     ),
                 ]),
                 html.Div([
-                    html.Label(
-                        id="label-dato-2",
-                        children="Parámetro b (No requerido en Hexagonal):",
-                    ),
+                    html.Label(id="label-dato-2", children="Parámetro b (No requerido en Hexagonal):"),
                     dcc.Input(
                         id="parametro-b",
                         type="number",
@@ -95,15 +112,19 @@ app.layout = html.Div(
                     ),
                 ]),
                 html.H4("Resolución de la Simulación", style={"marginBottom": "4px"}),
-                html.Label("Puntos / rango en b1:"),
+                html.Div([
+                html.Label([html.B("b"), html.Sub("1"), " — rango:"]),
                 dcc.Input(
                     id="b1range",
                     type="number",
                     value=5,
                     step=1,
+                    disabled=False,
                     style={"width": "100%", "marginTop": "4px"},
                 ),
-                html.Label("Puntos / rango en b2:"),
+                ]),
+                html.Div([
+                html.Label([html.B("b"), html.Sub("2"), " — rango:"]),
                 dcc.Input(
                     id="b2range",
                     type="number",
@@ -111,6 +132,7 @@ app.layout = html.Div(
                     step=1,
                     style={"width": "100%", "marginTop": "4px"},
                 ),
+                ]),
                 html.Button(
                     "Actualizar Simulación",
                     id="go",
@@ -122,96 +144,127 @@ app.layout = html.Div(
                         "fontWeight": "bold",
                     },
                 ),
-<<<<<<< HEAD
-                # Debajo del botón "Actualizar Simulación":
                 html.Hr(),
-                html.H4("Vectores primitivos", style={"marginBottom": "4px"}),
+                html.H2("Vectores primitivos", style={"marginBottom": "4px"}),
                 html.Div(
-                id="info-vectores",
-                style={
-                    "fontSize": "14px",
-                    "lineHeight": "1.45",
-                    "padding": "10px",
-                    "background": "#f5f5f5",
-                    "border": "1px solid #ccc",
-    },
-),
+                    id="info-vectores",
+                    style={
+                        "fontSize": "15px",
+                        "lineHeight": "1.45",
+                        "padding": "10px",
+                        "background": "#f5f5f5",
+                        "border": "1px solid #ccc",
+                    },
+                ),
             ],
         ),
         html.Div(
             style={"flex": "2", "border": "3px solid #e11", "padding": "8px"},
             children=[
                 dcc.Graph(id="plot", figure=figura_vacia(), style={"height": "100%"})
-=======
-            ],
-        ),
-        # PANEL DERECHO (2/3)
-        html.Div(
-            style={"flex": "2", "border": "3px solid #e11", "padding": "8px"},
-            children=[
-                dcc.Graph(
-                    id="plot",
-                    figure=figura_vacia(),
-                    style={"height": "100%"},
-                )
->>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
             ],
         ),
     ],
 )
 
-<<<<<<< HEAD
-=======
 
-# Callback 1: Habilitar/deshabilitar barras según la red elegida
->>>>>>> 58a6bd9970451abf6b752e468177414880ea6358
 @app.callback(
     Output("info-vectores", "children"),
     Input("tipo-red-2d", "value"),
     Input("parametro-a", "value"),
     Input("parametro-b", "value"),
 )
-
-
 def mostrar_vectores(geometria, a, b):
     a = 3.0 if not a else float(a)
     b = a if not b else float(b)
+
+    if geometria == "RECT":
+        con_a = 2*np.pi/a
+        con_b = 2*np.pi/b
+        return [
+            html.H4("Espacio real"),
+            html.Div(f"Red rectangular ($a={a:.3f}\\,\\mathrm{{Å}}$, $b={b:.3f}\\,\\mathrm{{Å}}$)"),
+            linea(f"$$\\mathbf{{a}}_1 = a[1,0,0] = [{a:.3f},\\,0,0]\\,\\mathrm{{Å}}$$ "),
+            linea(f"$$\\mathbf{{a}}_2 = b[0,1,0] = [0,\\,{b:.3f},0]\\,\\mathrm{{Å}}$$"),
+            linea(r"$$\gamma = 90^\circ$$"),
+            html.H4("Espacio recíproco"),
+            linea(
+                f"$$\\mathbf{{b}}_1 = \\frac{{2\\pi}}{{a}}[1,0,0] = "
+                f"[{con_a:.3f},\\,0,\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
+                ),
+            linea(
+                f"$$\\mathbf{{b}}_2 = \\frac{{2\\pi}}{{b}}[0,1,0] = "
+                f"[0,\\,{con_b:.3f},\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
+            ),
+            linea(r"$$\gamma^* = 90^\circ$$"),
+        ]
+
     if geometria == "HEX":
         return [
-            html.Div([html.B("Red hexagonal"), f" (a = {a} Å)"]),
-            html.Div([
-                html.B("a"), html.Sub("1"),
-                f" = ({a:.3f},  0) Å",
-            ]),
-            html.Div([
-                html.B("a"), html.Sub("2"),
-                f" = ({0.5*a:.3f},  {a * 3**0.5 / 2:.3f}) Å",
-            ]),
-            html.Div("γ = 120°"),
+            html.H4("Espacio real"),
+            html.Div(f"Red hexagonal ($a={a:.3f}\\,\\mathrm{{Å}}$)"),
+            linea(f"$$\\mathbf{{a}}_1 = [{a:.3f},\\,0]\\,\\mathrm{{Å}}$$"),
+            linea(
+                f"$$\\mathbf{{a}}_2 = [{0.5 * a:.3f},\\,{a * 3**0.5 / 2:.3f}]\\,\\mathrm{{Å}}$$"
+            ),
+            linea(r"$$\gamma = 120^\circ$$"),
+            html.H4("Espacio recíproco"),   
+            linea(
+                r"$$\mathbf{b}_2 = \frac{2\pi}{a}\left(0,\frac{2}{\sqrt{3}}\right)$$"
+            ),
+            linea(r"$$\gamma^* = 60^\circ$$"),
         ]
-    if geometria == "RECT":
-        return [
-            html.Div([html.B("Red rectangular"), f" (a = {a} Å, b = {b} Å)"]),
-            html.Div([html.B("a"), html.Sub("1"), f" = ({a:.3f},  0) Å"]),
-            html.Div([html.B("a"), html.Sub("2"), f" = (0,  {b:.3f}) Å"]),
-            html.Div("γ = 90°"),
-        ]
+
     if geometria == "CENT":
+        con_a = 2*np.pi/a
         return [
-            html.Div([html.B("Red centrada"), f" (a = {a} Å, b = {b} Å)"]),
-            html.Div([html.B("a"), html.Sub("1"), f" = ({a:.3f},  0) Å"]),
-            html.Div([html.B("a"), html.Sub("2"), f" = (0,  {b:.3f}) Å"]),
-            html.Div("Nodo extra en el centro: (a/2, b/2)"),
-            html.Div("γ = 90°"),
-        ]
+            html.H4("Espacio real"),
+            html.Div(f"Red cuadrada centrada ($a={a:.3f}\\,\\mathrm{{Å}}$)"),
+            linea(
+            f"$$\\mathbf{{a}}_1 = \\frac{{a}}{{2}}[1,1,0] = "
+            f"[{a/2:.3f},\\,{a/2:.3f},\\,0]\\,\\mathrm{{Å}}$$"
+            ),
+            linea(
+                f"$$\\mathbf{{a}}_2 = \\frac{{a}}{{2}}[1,-1,0] = "
+                f"[{a/2:.3f},\\,{-a/2:.3f},\\,0]\\,\\mathrm{{Å}}$$"
+            ),
+            linea(r"$$\gamma = 90^\circ$$"),
+            html.H4("Espacio recíproco"),
+            linea(
+                f"$$\\mathbf{{b}}_1 = \\frac{{2\\pi}}{{a}}[1,1,0]= "
+                f"[{con_a:.3f},\\,{con_a:.3f},\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
+            ),
+            linea(
+                f"$$\\mathbf{{b}}_2 = \\frac{{2\\pi}}{{a}}[1,-1,0]= "
+                f"[{con_a:.3f},\\,{-    con_a:.3f},\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
+            ),
+            linea(r"$$\gamma^* = 90^\circ$$"),
+        ]   
     return "Selecciona una estructura."
 
 
-
-
-
-
-
+app.clientside_callback(
+    """
+    function () {
+        setTimeout(function () {
+            const el = document.getElementById("info-vectores");
+            if (!el || !window.MathJax) return;
+            const go = function () {
+                MathJax.typesetClear([el]);
+                MathJax.typesetPromise([el]);
+            };
+            if (MathJax.startup && MathJax.startup.promise) {
+                MathJax.startup.promise.then(go);
+            } else if (MathJax.typesetPromise) {
+                go();
+            }
+        }, 50);
+        return "";
+    }
+    """,
+    Output("mathjax-tick", "data"),
+    Input("info-vectores", "children"),
+)
 
 
 @app.callback(
@@ -220,14 +273,14 @@ def mostrar_vectores(geometria, a, b):
     Output("parametro-b", "value"),
     Output("label-dato-1", "children"),
     Output("label-dato-2", "children"),
-    Input("tipo-red-2d", "value"),  # DEBE ser el mismo id del Dropdown
+    Input("tipo-red-2d", "value"),
 )
 def actualizar_campos(opcion):
     if opcion == "HEX":
         return (
             False,
             True,
-            no_update,  # no pongas None
+            no_update,
             "Parámetro de red a (Å):",
             "Parámetro b (No requerido en Hexagonal):",
         )
@@ -242,10 +295,10 @@ def actualizar_campos(opcion):
     if opcion == "CENT":
         return (
             False,
-            False,
-            4.0,
+            True,
+            0.0,
             "Parámetro base a (Å):",
-            "Parámetro base b (Å):",
+            "Parámetro b (No requerido en FCS):",
         )
     return False, False, no_update, "Dato 1:", "Dato 2:"
 
@@ -269,9 +322,7 @@ def update_plot(n_clicks, geometria, dato1, dato2, b1range, b2range):
     n1 = 5 if not b1range else int(b1range)
     n2 = 5 if not b2range else int(b2range)
 
-    # Aquí luego: rr.calculadora(geometria, a, b, datax=(-n1, n1), datay=(-n2, n2))
-    fig = rr.calculadora(geometria, a, b, datax=(-n1, n1), datay=(-n2, n2))
-    return fig
+    return rr.calculadora(geometria, a, b, datax=(-n1, n1), datay=(-n2, n2))
 
 
 if __name__ == "__main__":
