@@ -6,43 +6,152 @@ import numpy as np
 
 app = Dash(__name__)
 
-app.index_string = """
+# Tema oscuro compartido
+DARK = {
+    "bg": "#0f1419",
+    "panel": "#1a1f26",
+    "panel2": "#222831",
+    "border": "#2d3640",
+    "text": "#e8eaed",
+    "muted": "#9aa0a6",
+    "accent": "#2a9d8f",
+    "accent_hover": "#21867a",
+    "input_bg": "#12171e",
+    "danger": "#e63946",
+}
+
+INPUT_STYLE = {
+    "width": "100%",
+    "marginTop": "4px",
+    "backgroundColor": DARK["input_bg"],
+    "color": DARK["text"],
+    "border": f"1px solid {DARK['border']}",
+    "borderRadius": "6px",
+    "padding": "8px 10px",
+    "outline": "none",
+}
+
+app.index_string = f"""
 <!DOCTYPE html>
 <html>
     <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
+        {{%metas%}}
+        <title>{{%title%}}</title>
+        {{%favicon%}}
+        {{%css%}}
         <style>
-            summary {
+            html, body {{
+                margin: 0;
+                padding: 0;
+                background: {DARK["bg"]};
+                color: {DARK["text"]};
+            }}
+            summary {{
                 cursor: pointer;
                 font-weight: 700;
                 font-size: 18px;
                 padding: 8px 0;
-            }
-            details {
-                border-bottom: 1px solid #ccc;
+                color: {DARK["text"]};
+                list-style: none;
+            }}
+            summary::-webkit-details-marker {{ display: none; }}
+            summary::before {{
+                content: "▸ ";
+                color: {DARK["accent"]};
+            }}
+            details[open] > summary::before {{ content: "▾ "; }}
+            details {{
+                border-bottom: 1px solid {DARK["border"]};
                 padding-bottom: 6px;
-            }
+            }}
+            label {{
+                color: {DARK["muted"]};
+                font-size: 14px;
+            }}
+            /* Dropdowns */
+            .Select-control, .Select-menu-outer, .Select-option,
+            .Select-placeholder, .Select--single > .Select-control .Select-value,
+            .Select-input > input {{
+                background-color: {DARK["input_bg"]} !important;
+                color: {DARK["text"]} !important;
+                border-color: {DARK["border"]} !important;
+            }}
+            .Select-menu-outer {{
+                border: 1px solid {DARK["border"]} !important;
+            }}
+            .Select-option.is-focused, .Select-option:hover {{
+                background-color: {DARK["panel2"]} !important;
+            }}
+            .Select-option.is-selected {{
+                background-color: {DARK["accent"]} !important;
+                color: #fff !important;
+            }}
+            /* React-Select v2+ (Dash moderno) */
+            .dash-dropdown .Select-control,
+            div[class*="css-"][class*="-control"] {{
+                background-color: {DARK["input_bg"]} !important;
+                border-color: {DARK["border"]} !important;
+                color: {DARK["text"]} !important;
+            }}
+            div[class*="css-"][class*="-menu"] {{
+                background-color: {DARK["panel2"]} !important;
+                border: 1px solid {DARK["border"]} !important;
+            }}
+            div[class*="css-"][class*="-option"] {{
+                background-color: {DARK["panel2"]} !important;
+                color: {DARK["text"]} !important;
+            }}
+            div[class*="css-"][class*="-singleValue"],
+            div[class*="css-"][class*="-placeholder"],
+            div[class*="css-"][class*="-Input"] input {{
+                color: {DARK["text"]} !important;
+            }}
+            /* Tabs */
+            .tab {{
+                background-color: {DARK["panel2"]} !important;
+                color: {DARK["muted"]} !important;
+                border: 1px solid {DARK["border"]} !important;
+                border-bottom: none !important;
+            }}
+            .tab--selected {{
+                background-color: {DARK["panel"]} !important;
+                color: {DARK["accent"]} !important;
+                border-top: 2px solid {DARK["accent"]} !important;
+            }}
+            .tab-content {{
+                border: none !important;
+                padding-top: 10px;
+            }}
+            /* Checklist */
+            input[type="checkbox"] {{
+                accent-color: {DARK["accent"]};
+            }}
+            /* Scrollbar */
+            ::-webkit-scrollbar {{ width: 8px; height: 8px; }}
+            ::-webkit-scrollbar-track {{ background: {DARK["bg"]}; }}
+            ::-webkit-scrollbar-thumb {{
+                background: {DARK["border"]};
+                border-radius: 4px;
+            }}
+            ::-webkit-scrollbar-thumb:hover {{ background: {DARK["muted"]}; }}
         </style>
         <script>
-        window.MathJax = {
-          tex: {
+        window.MathJax = {{
+          tex: {{
             inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
             displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
-          },
-          svg: {fontCache: 'global'}
-        };
+          }},
+          svg: {{fontCache: 'global'}}
+        }};
         </script>
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     </head>
     <body>
-        {%app_entry%}
+        {{%app_entry%}}
         <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
+            {{%config%}}
+            {{%scripts%}}
+            {{%renderer%}}
         </footer>
     </body>
 </html>
@@ -54,27 +163,37 @@ def figura_vacia():
     fig.update_layout(
         xaxis={"visible": False},
         yaxis={"visible": False},
-        plot_bgcolor="white",
+        paper_bgcolor=DARK["bg"],
+        plot_bgcolor=DARK["panel"],
+        font=dict(color=DARK["text"]),
         annotations=[{
             "text": "Configura los parámetros y presiona 'Actualizar Simulación'",
             "xref": "paper",
             "yref": "paper",
             "showarrow": False,
-            "font": {"size": 16, "color": "#666"},
+            "font": {"size": 16, "color": DARK["muted"]},
         }],
     )
     return fig
 
 
 def linea(tex):
-    return html.Div(tex, style={"margin": "8px 0"})
+    return html.Div(tex, style={"margin": "8px 0", "color": DARK["text"]})
 
 
 def seccion(titulo, children, abierto=False):
     return html.Details(
         [
             html.Summary(titulo),
-            html.Div(children, style={"display": "flex", "flexDirection": "column", "gap": "10px", "padding": "4px 0 10px"}),
+            html.Div(
+                children,
+                style={
+                    "display": "flex",
+                    "flexDirection": "column",
+                    "gap": "10px",
+                    "padding": "4px 0 10px",
+                },
+            ),
         ],
         open=abierto,
     )
@@ -82,26 +201,36 @@ def seccion(titulo, children, abierto=False):
 
 app.layout = html.Div(
     style={
-        "margin": "24px",
-        "height": "calc(100vh - 48px)",
+        "margin": "0",
+        "padding": "24px",
+        "height": "100vh",
         "display": "flex",
         "gap": "16px",
         "boxSizing": "border-box",
         "fontFamily": "system-ui, sans-serif",
+        "backgroundColor": DARK["bg"],
+        "color": DARK["text"],
     },
     children=[
         dcc.Store(id="mathjax-tick"),
         html.Div(
             style={
                 "flex": "1",
-                "border": "2px solid #111",
+                "border": f"1px solid {DARK['border']}",
+                "borderRadius": "10px",
                 "padding": "16px",
                 "display": "flex",
                 "flexDirection": "column",
                 "gap": "4px",
                 "overflowY": "auto",
+                "backgroundColor": DARK["panel"],
+                "boxShadow": "0 8px 24px rgba(0,0,0,0.35)",
             },
             children=[
+                html.H2(
+                    "RHEED · Red recíproca",
+                    style={"margin": "0 0 8px", "color": DARK["text"], "fontSize": "22px"},
+                ),
                 seccion("Cristal", [
                     html.Label("Estructura cristalina"),
                     dcc.Dropdown(
@@ -113,11 +242,18 @@ app.layout = html.Div(
                         ],
                         value="HEX",
                         clearable=False,
+                        style={"backgroundColor": DARK["input_bg"]},
                     ),
                     html.Label(id="label-dato-1", children="Parámetro de red a (Å):"),
-                    dcc.Input(id="parametro-a", type="number", value=3.0, step=0.01, style={"width": "100%"}),
+                    dcc.Input(
+                        id="parametro-a", type="number", value=3.0, step=0.01,
+                        style=INPUT_STYLE,
+                    ),
                     html.Label(id="label-dato-2", children="Parámetro b (No requerido en Hexagonal):"),
-                    dcc.Input(id="parametro-b", type="number", disabled=True, style={"width": "100%"}),
+                    dcc.Input(
+                        id="parametro-b", type="number", disabled=True,
+                        style=INPUT_STYLE,
+                    ),
                 ], abierto=True),
 
                 seccion("E-beam", [
@@ -125,15 +261,51 @@ app.layout = html.Div(
                         id="modo-haz",
                         value="azimut",
                         children=[
-                            dcc.Tab(label="Ángulo azimutal", value="azimut"),
-                            dcc.Tab(label="Notación de Miller", value="miller"),
+                            dcc.Tab(
+                                label="Ángulo azimutal",
+                                value="azimut",
+                                style={
+                                    "backgroundColor": DARK["panel2"],
+                                    "color": DARK["muted"],
+                                    "border": f"1px solid {DARK['border']}",
+                                },
+                                selected_style={
+                                    "backgroundColor": DARK["panel"],
+                                    "color": DARK["accent"],
+                                    "border": f"1px solid {DARK['border']}",
+                                    "borderTop": f"2px solid {DARK['accent']}",
+                                },
+                            ),
+                            dcc.Tab(
+                                label="Notación de Miller",
+                                value="miller",
+                                style={
+                                    "backgroundColor": DARK["panel2"],
+                                    "color": DARK["muted"],
+                                    "border": f"1px solid {DARK['border']}",
+                                },
+                                selected_style={
+                                    "backgroundColor": DARK["panel"],
+                                    "color": DARK["accent"],
+                                    "border": f"1px solid {DARK['border']}",
+                                    "borderTop": f"2px solid {DARK['accent']}",
+                                },
+                            ),
                         ],
+                        colors={
+                            "border": DARK["border"],
+                            "primary": DARK["accent"],
+                            "background": DARK["panel2"],
+                        },
                     ),
                     html.Div(
                         id="panel-azimut",
                         children=[
                             html.Label("Azimut φ respecto a a1 (°)"),
-                            dcc.Input(id="phi", type="number", value=0, step=1, style={"width": "100%", "marginTop": "4px"}),
+                            dcc.Input(
+                                id="phi", type="number", value=0, step=1,
+                                style=INPUT_STYLE,
+                            ),
                         ],
                     ),
                     html.Div(
@@ -142,35 +314,58 @@ app.layout = html.Div(
                         children=[
                             html.Label("Dirección [u v] = u a1 + v a2"),
                             html.Div([
-                                dcc.Input(id="miller-u", type="number", value=1, step=1, style={"width": "48%"}),
-                                dcc.Input(id="miller-v", type="number", value=0, step=1, style={"width": "48%", "marginLeft": "4%"}),
+                                dcc.Input(
+                                    id="miller-u", type="number", value=1, step=1,
+                                    style={**INPUT_STYLE, "width": "48%"},
+                                ),
+                                dcc.Input(
+                                    id="miller-v", type="number", value=0, step=1,
+                                    style={**INPUT_STYLE, "width": "48%", "marginLeft": "4%"},
+                                ),
                             ], style={"marginTop": "4px"}),
                         ],
                     ),
                 ]),
+
                 seccion("Reconstrucción", [
-    dcc.Checklist(
-        id="modo-reconstructed",
-        options=[{"label": " Agregar vector de reconstrucción", "value": "on"}],
-        value=[],
-    ),
-    html.Div(
-        id="panel-reconstruccion",
-        style={"display": "none"},
-        children=[
-            html.Label("Vector extra: A1 b1 + A2 b2"),
-            html.Div([
-                dcc.Input(id="A1", type="number", value=2, step=1, style={"width": "48%"}),
-                dcc.Input(id="A2", type="number", value=1, step=1, style={"width": "48%", "marginLeft": "4%"}),
-            ]),
-        ],
-    ),
-]),
+                    dcc.Checklist(
+                        id="modo-reconstructed",
+                        options=[{"label": " Agregar reconstrucción A1 × A2", "value": "on"}],
+                        value=[],
+                        style={"color": DARK["text"]},
+                        inputStyle={"marginRight": "6px"},
+                        labelStyle={"color": DARK["text"]},
+                    ),
+                    html.Div(
+                        id="panel-reconstruccion",
+                        style={"display": "none"},
+                        children=[
+                            html.Label("Órdenes A1, A2 (celda A1×A2)"),
+                            html.Div([
+                                dcc.Input(
+                                    id="A1", type="number", value=2, step=1,
+                                    style={**INPUT_STYLE, "width": "48%"},
+                                ),
+                                dcc.Input(
+                                    id="A2", type="number", value=1, step=1,
+                                    style={**INPUT_STYLE, "width": "48%", "marginLeft": "4%"},
+                                ),
+                            ]),
+                        ],
+                    ),
+                ]),
+
                 seccion("Configuración", [
                     html.Label([html.B("b"), html.Sub("1"), " — rango:"]),
-                    dcc.Input(id="b1range", type="number", value=3, step=1, style={"width": "100%"}),
+                    dcc.Input(
+                        id="b1range", type="number", value=3, step=1,
+                        style=INPUT_STYLE,
+                    ),
                     html.Label([html.B("b"), html.Sub("2"), " — rango:"]),
-                    dcc.Input(id="b2range", type="number", value=3, step=1, style={"width": "100%"}),
+                    dcc.Input(
+                        id="b2range", type="number", value=3, step=1,
+                        style=INPUT_STYLE,
+                    ),
                     html.Label("Visualización"),
                     dcc.Checklist(
                         id="opciones-visual",
@@ -178,9 +373,12 @@ app.layout = html.Div(
                             {"label": " Varillas", "value": "varillas"},
                             {"label": " Vectores primitivos", "value": "vectores"},
                             {"label": " Esfera de Ewald", "value": "ewald"},
-                                ],
-                        value=["varillas"],  # lo que empieza marcado
-                ),
+                        ],
+                        value=["varillas"],
+                        style={"color": DARK["text"]},
+                        inputStyle={"marginRight": "6px"},
+                        labelStyle={"display": "block", "color": DARK["text"], "marginBottom": "4px"},
+                    ),
                 ]),
 
                 seccion("Datos", [
@@ -190,42 +388,54 @@ app.layout = html.Div(
                             "fontSize": "15px",
                             "lineHeight": "1.45",
                             "padding": "10px",
-                            "background": "#f5f5f5",
-                            "border": "1px solid #ccc",
+                            "background": DARK["panel2"],
+                            "border": f"1px solid {DARK['border']}",
+                            "borderRadius": "8px",
+                            "color": DARK["text"],
                         },
                     ),
-                ]), 
+                ]),
 
-         # Fuera de las secciones, debajo de la última
-    html.Button(
-        "Actualizar Simulación",
-        id="go",
-        n_clicks=0,
-        style={
-            "marginTop": "12px",
-            "padding": "10px",
-            "cursor": "pointer",
-            "fontWeight": "bold",
-            "width": "100%",
-        },
-    ),          
-                    
-            ], 
-             
-              # cierra children del panel izquierdo
+                html.Button(
+                    "Actualizar Simulación",
+                    id="go",
+                    n_clicks=0,
+                    style={
+                        "marginTop": "12px",
+                        "padding": "12px",
+                        "cursor": "pointer",
+                        "fontWeight": "bold",
+                        "width": "100%",
+                        "backgroundColor": DARK["accent"],
+                        "color": "#fff",
+                        "border": "none",
+                        "borderRadius": "8px",
+                        "fontSize": "15px",
+                    },
+                ),
+            ],
         ),
         html.Div(
-            style={"flex": "2", "border": "3px solid #e11", "padding": "8px"},
-            children=[dcc.Graph(
-    id="plot",
-    figure=figura_vacia(),
-    style={"height": "100%", "width": "100%"},
-    config={"responsive": True},
-)],
+            style={
+                "flex": "2",
+                "border": f"1px solid {DARK['border']}",
+                "borderRadius": "10px",
+                "padding": "8px",
+                "backgroundColor": DARK["panel"],
+                "boxShadow": "0 8px 24px rgba(0,0,0,0.35)",
+                "minHeight": 0,
+            },
+            children=[
+                dcc.Graph(
+                    id="plot",
+                    figure=figura_vacia(),
+                    style={"height": "100%", "width": "100%"},
+                    config={"responsive": True, "displaylogo": False},
+                ),
+            ],
         ),
     ],
 )
-
 
 
 @app.callback(
@@ -238,9 +448,6 @@ def mostrar_reconstruccion(opciones):
     return {"display": "none"}
 
 
-
-
-    
 @app.callback(
     Output("panel-azimut", "style"),
     Output("panel-miller", "style"),
@@ -268,12 +475,12 @@ def mostrar_vectores(geometria, a, b):
         con_a = 2 * np.pi / a
         con_b = 2 * np.pi / b
         return [
-            html.H4("Espacio real"),
+            html.H4("Espacio real", style={"color": DARK["accent"], "margin": "0 0 6px"}),
             html.Div(f"Red rectangular ($a={a:.3f}\\,\\mathrm{{Å}}$, $b={b:.3f}\\,\\mathrm{{Å}}$)"),
             linea(f"$$\\mathbf{{a}}_1 = a[1,0,0] = [{a:.3f},\\,0,\\,0]\\,\\mathrm{{Å}}$$"),
             linea(f"$$\\mathbf{{a}}_2 = b[0,1,0] = [0,\\,{b:.3f},\\,0]\\,\\mathrm{{Å}}$$"),
             linea(r"$$\gamma = 90^\circ$$"),
-            html.H4("Espacio recíproco"),
+            html.H4("Espacio recíproco", style={"color": DARK["accent"], "margin": "12px 0 6px"}),
             linea(
                 f"$$\\mathbf{{b}}_1 = \\frac{{2\\pi}}{{a}}[1,0,0] = "
                 f"[{con_a:.3f},\\,0,\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
@@ -288,7 +495,7 @@ def mostrar_vectores(geometria, a, b):
     if geometria == "HEX":
         con_a = 2 * np.pi / a
         return [
-            html.H4("Espacio real"),
+            html.H4("Espacio real", style={"color": DARK["accent"], "margin": "0 0 6px"}),
             html.Div(f"Red hexagonal ($a={a:.3f}\\,\\mathrm{{Å}}$)"),
             linea(f"$$\\mathbf{{a}}_1 = a[1,0,0] = [{a:.3f},\\,0,\\,0]\\,\\mathrm{{Å}}$$"),
             linea(
@@ -296,7 +503,7 @@ def mostrar_vectores(geometria, a, b):
                 f"[{-0.5 * a:.3f},\\,{a * np.sqrt(3) / 2:.3f},\\,0]\\,\\mathrm{{Å}}$$"
             ),
             linea(r"$$\gamma = 120^\circ$$"),
-            html.H4("Espacio recíproco"),
+            html.H4("Espacio recíproco", style={"color": DARK["accent"], "margin": "12px 0 6px"}),
             linea(
                 f"$$\\mathbf{{b}}_1 = \\frac{{2\\pi}}{{a}}\\left[1,\\frac{{1}}{{\\sqrt{{3}}}},0\\right] = "
                 f"[{con_a:.3f},\\,{con_a / np.sqrt(3):.3f},\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
@@ -311,7 +518,7 @@ def mostrar_vectores(geometria, a, b):
     if geometria == "CENT":
         con_a = 2 * np.pi / a
         return [
-            html.H4("Espacio real"),
+            html.H4("Espacio real", style={"color": DARK["accent"], "margin": "0 0 6px"}),
             html.Div(f"Red cuadrada centrada ($a={a:.3f}\\,\\mathrm{{Å}}$)"),
             linea(
                 f"$$\\mathbf{{a}}_1 = \\frac{{a}}{{2}}[1,1,0] = "
@@ -322,7 +529,7 @@ def mostrar_vectores(geometria, a, b):
                 f"[{a / 2:.3f},\\,{-a / 2:.3f},\\,0]\\,\\mathrm{{Å}}$$"
             ),
             linea(r"$$\gamma = 90^\circ$$"),
-            html.H4("Espacio recíproco"),
+            html.H4("Espacio recíproco", style={"color": DARK["accent"], "margin": "12px 0 6px"}),
             linea(
                 f"$$\\mathbf{{b}}_1 = \\frac{{2\\pi}}{{a}}[1,1,0] = "
                 f"[{con_a:.3f},\\,{con_a:.3f},\\,0]\\,\\mathrm{{Å}}^{{-1}}$$"
@@ -415,9 +622,9 @@ def update_plot(
 
     opciones = opciones_visual or []
     flags = [
-        "varillas" in opciones,   # [0]
-        "vectores" in opciones,   # [1]
-        "ewald" in opciones,      # [2]
+        "varillas" in opciones,
+        "vectores" in opciones,
+        "ewald" in opciones,
     ]
 
     return rr.calculadora(
@@ -426,6 +633,7 @@ def update_plot(
         usar_reconstruccion, coef_1, coef_2,
         flags,
     )
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=8765)
