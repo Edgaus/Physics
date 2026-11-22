@@ -154,8 +154,9 @@ def calculadora(
         z=ZZ,
         surfacecolor=XX,
         colorscale="Blues",
-        opacity=0.35,
+        opacity=0.22,
         showscale=False,
+        showlegend=False,
         name="plano xy",
         hoverinfo="skip",
     ))
@@ -182,7 +183,7 @@ def calculadora(
     fig.add_trace(go.Scatter3d(
         x=px, y=py, z=pz,
         mode="markers",
-        marker=dict(size=5, color="#0f3d3e"),
+        marker=dict(size=5, color="#ffffff"),
         customdata=pcd,
         hovertemplate=hover,
         name="nodos",
@@ -198,99 +199,117 @@ def calculadora(
             name=f"recon {A1i}×{A2i}",
         ))
 
-    def _flecha(vec, nombre, color, width=5, tip_frac=0.15, etiqueta=None, showlegend=True):
-        """Flecha 3D: línea + cono + etiqueta en la punta."""
+    def _flecha(vec, nombre, color, width=5, tip_frac=0.18, etiqueta=None,
+                showlegend=True, text_size=14, con_cono=True):
+        """Línea (+ cono opcional) + etiqueta. Un clic en la leyenda oculta el grupo."""
         vec = np.asarray(vec, dtype=float)
         etiqueta = etiqueta or nombre
         largo = float(np.linalg.norm(vec))
-        tip_size = tip_frac * largo if largo > 0 else 0.1 * zlim
+        tip_size = tip_frac * largo if largo > 0 else 0.12 * zlim
+        grupo = f"flecha:{nombre}"
 
         fig.add_trace(go.Scatter3d(
             x=[0, vec[0]], y=[0, vec[1]], z=[0, vec[2]],
             mode="lines",
             line=dict(width=width, color=color),
             name=etiqueta,
-            legendgroup=nombre,
+            legendgroup=grupo,
             showlegend=showlegend,
         ))
-        fig.add_trace(go.Cone(
-            x=[vec[0]], y=[vec[1]], z=[vec[2]],
-            u=[vec[0]], v=[vec[1]], w=[vec[2]],
-            sizemode="absolute",
-            sizeref=tip_size,
-            anchor="tip",
-            colorscale=[[0, color], [1, color]],
-            showscale=False,
-            legendgroup=nombre,
-            showlegend=False,
-            name=etiqueta,
-        ))
+        if con_cono:
+            fig.add_trace(go.Cone(
+                x=[vec[0]], y=[vec[1]], z=[vec[2]],
+                u=[vec[0]], v=[vec[1]], w=[vec[2]],
+                sizemode="absolute",
+                sizeref=tip_size,
+                anchor="tip",
+                colorscale=[[0, color], [1, color]],
+                showscale=False,
+                legendgroup=grupo,
+                showlegend=False,
+                name=etiqueta,
+                hoverinfo="skip",
+            ))
         fig.add_trace(go.Scatter3d(
             x=[vec[0]], y=[vec[1]], z=[vec[2]],
             mode="text",
             text=[nombre],
             textposition="top center",
-            textfont=dict(color=color, size=12),
-            legendgroup=nombre,
+            textfont=dict(color=color, size=text_size, family="Arial Black, sans-serif"),
+            legendgroup=grupo,
             showlegend=False,
             hoverinfo="skip",
+            name=etiqueta,
         ))
 
-    # 5a) Ejes cartesianos x, y (y z corto de referencia)
-    eje_x = np.array([0.9 * xlim, 0.0, 0.0])
-    eje_y = np.array([0.0, 0.9 * ylim, 0.0])
-    eje_z = np.array([0.0, 0.0, 0.45 * zlim])
-
-    _flecha(eje_x, "x", "#264653", width=3, tip_frac=0.08,
-            etiqueta=f"eje x (±{xlim:.2f} Å⁻¹)")
-    _flecha(eje_y, "y", "#2a9d8f", width=3, tip_frac=0.08,
-            etiqueta=f"eje y (±{ylim:.2f} Å⁻¹)")
-    _flecha(eje_z, "z", "#6c757d", width=2, tip_frac=0.10,
-            etiqueta="eje z")
-
-    # Líneas bidireccionales del eje (cruzan el origen)
-    fig.add_trace(go.Scatter3d(
-        x=[-xlim, xlim, None, 0, 0, None, 0, 0],
-        y=[0, 0, None, -ylim, ylim, None, 0, 0],
-        z=[0, 0, None, 0, 0, None, z_range[0], z_range[1]],
-        mode="lines",
-        line=dict(width=2, color="#adb5bd"),
-        name="ejes cartesianos",
-        hoverinfo="skip",
-        showlegend=False,
-    ))
-
-    # 5b) Vectores de reconstrucción b1* = b1/A1, b2* = b2/A2
-    if reconstruct and (A1i > 1 or A2i > 1):
-        b1_star = b1 / A1i
-        b2_star = b2 / A2i
-        _flecha(
-            b1_star, f"b1* (=b1/{A1i})", "#f4a261", width=5,
-            etiqueta=f"b1* recon ({b1_star[0]:.2f}, {b1_star[1]:.2f}, {b1_star[2]:.2f})",
-        )
-        _flecha(
-            b2_star, f"b2* (=b2/{A2i})", "#e76f51", width=5,
-            etiqueta=f"b2* recon ({b2_star[0]:.2f}, {b2_star[1]:.2f}, {b2_star[2]:.2f})",
-        )
-
-    # 5c) Vectores primitivos b1, b2, z (personalizacion[1])
+    # 5) Vectores: ejes + b1/b2 + reconstrucción (solo si Configuración → Vectores)
     if personalizacion[1]:
+        # 5a) Ejes x,y: solo línea + etiqueta (sin cono). z: flecha completa.
+        eje_x = np.array([0.85 * xlim, 0.0, 0.0])
+        eje_y = np.array([0.0, 0.85 * ylim, 0.0])
+        eje_z = np.array([0.0, 0.0, 0.55 * zlim])
+
+        _flecha(
+            eje_x, "x̂", "#4cc9f0", width=7, tip_frac=0.14, text_size=16,
+            etiqueta=f"eje x̂ (±{xlim:.2f} Å⁻¹)", con_cono=False,
+        )
+        _flecha(
+            eje_y, "ŷ", "#80ed99", width=7, tip_frac=0.14, text_size=16,
+            etiqueta=f"eje ŷ (±{ylim:.2f} Å⁻¹)", con_cono=False,
+        )
+        _flecha(
+            eje_z, "ẑ", "#f8f9fa", width=6, tip_frac=0.16, text_size=16,
+            etiqueta="eje ẑ", con_cono=True,
+        )
+
+        # Cruz tenue de referencia (no compite con las flechas)
+        fig.add_trace(go.Scatter3d(
+            x=[-xlim, xlim, None, 0, 0, None, 0, 0],
+            y=[0, 0, None, -ylim, ylim, None, 0, 0],
+            z=[0, 0, None, 0, 0, None, z_range[0], z_range[1]],
+            mode="lines",
+            line=dict(width=1, color="rgba(173,181,189,0.35)"),
+            name="ejes cartesianos",
+            hoverinfo="skip",
+            showlegend=False,
+            legendgroup="ejes-ref",
+        ))
+
+        # 5b) Vectores primitivos de la red recíproca
         for nombre, vec, color in (
-            ("b1", vectores[0], "#e63946"),
-            ("b2", vectores[1], "#1d3557"),
-            ("ẑ", vectores[2], "#457b9d"),
+            ("b₁", vectores[0], "#ff006e"),   # magenta/rojo intenso
+            ("b₂", vectores[1], "#8338ec"),   # violeta
+            ("b_z", vectores[2], "#3a86ff"),  # azul brillante
         ):
             etiqueta = f"{nombre} ({vec[0]:.2f}, {vec[1]:.2f}, {vec[2]:.2f})"
-            _flecha(vec, nombre, color, width=6, etiqueta=etiqueta)
+            _flecha(vec, nombre, color, width=9, tip_frac=0.20, text_size=15,
+                    etiqueta=etiqueta)
+
+        # 5c) Vectores de reconstrucción b1* = b1/A1, b2* = b2/A2
+        #     Solo si hay reconstrucción activa Y "Vectores" está enabled
+        if reconstruct and (A1i > 1 or A2i > 1):
+            b1_star = b1 / A1i
+            b2_star = b2 / A2i
+            _flecha(
+                b1_star, f"b₁* (=b₁/{A1i})", "#ffbe0b", width=7, tip_frac=0.22,
+                text_size=14,
+                etiqueta=f"b₁* recon ({b1_star[0]:.2f}, {b1_star[1]:.2f}, {b1_star[2]:.2f})",
+            )
+            _flecha(
+                b2_star, f"b₂* (=b₂/{A2i})", "#c332be", width=7, tip_frac=0.22,
+                text_size=14,
+                etiqueta=f"b₂* recon ({b2_star[0]:.2f}, {b2_star[1]:.2f}, {b2_star[2]:.2f})",
+            )
 
         fig.add_trace(go.Scatter3d(
             x=[0],
             y=[0],
             z=[0],
             mode="markers+text",
-            marker=dict(size=6, color="gold", line=dict(width=2, color="black")),
+            marker=dict(size=8, color="#ffd60a", line=dict(width=2, color="#000")),
             text=["Origen (0, 0, 0)"],
             textposition="bottom center",
+            textfont=dict(color="#ffd60a", size=12),
             name="Origen (0, 0, 0)",
             showlegend=True,
         ))
@@ -310,24 +329,61 @@ def calculadora(
         showbackground=True,
         color="#9aa0a6",
     )
+    # Sin varillas: el eje z se dibuja, pero sin números/ticks
+    if personalizacion[0]:
+        zaxis_kw = dict(
+            range=z_range,
+            title="z (Å⁻¹)",
+            showticklabels=True,
+            ticks="outside",
+            **axis_style,
+        )
+    else:
+        zaxis_kw = dict(
+            range=z_range,
+            title="z",
+            showticklabels=False,
+            ticks="",
+            showspikes=False,
+            **axis_style,
+        )
+
+    # personalizacion[3] opcional: mostrar leyenda (True por defecto)
+    mostrar_leyenda = True if len(personalizacion) < 4 else bool(personalizacion[3])
+
     fig.update_layout(
-        margin=dict(l=0, r=0, t=40, b=0),
+        template="plotly_dark",
+        margin=dict(l=0, r=0, t=48, b=0),
         paper_bgcolor="#0f1419",
         plot_bgcolor="#0f1419",
         font=dict(color="#e8eaed"),
+        showlegend=mostrar_leyenda,
         legend=dict(
-            bgcolor="rgba(26,31,38,0.85)",
+            bgcolor="rgba(26,31,38,0.92)",
             bordercolor="#2d3640",
-            font=dict(color="#e8eaed"),
+            borderwidth=1,
+            font=dict(color="#e8eaed", size=11),
+            itemsizing="constant",
+            # Clic = ocultar/mostrar ese ítem (+ su legendgroup: cono y texto)
+            itemclick="toggle",
+            itemdoubleclick="toggleothers",
+            groupclick="togglegroup",
+            tracegroupgap=4,
         ),
         scene=dict(
             bgcolor="#0f1419",
             xaxis=dict(range=[-xlim, xlim], title="x (Å⁻¹)", **axis_style),
             yaxis=dict(range=[-ylim, ylim], title="y (Å⁻¹)", **axis_style),
-            zaxis=dict(range=z_range, title="z (Å⁻¹)", **axis_style),
+            zaxis=zaxis_kw,
             aspectmode="data",
+            # Vista por defecto similar a la captura (casi cenital, ligeramente inclinada)
+            camera=dict(
+                eye=dict(x=0.15, y=-1.55, z=1.85),
+                center=dict(x=0, y=0, z=-0.05),
+                up=dict(x=0, y=0, z=1),
+            ),
         ),
         uirevision="rheed",
-        title=dict(text=titulo, font=dict(color="#e8eaed")),
+        title=dict(text=titulo, font=dict(color="#e8eaed", size=16)),
     )
     return fig
