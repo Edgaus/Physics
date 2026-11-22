@@ -148,18 +148,39 @@ app.layout = html.Div(
                         ],
                     ),
                 ]),
-
+                seccion("Reconstrucción", [
+    dcc.Checklist(
+        id="modo-reconstructed",
+        options=[{"label": " Agregar vector de reconstrucción", "value": "on"}],
+        value=[],
+    ),
+    html.Div(
+        id="panel-reconstruccion",
+        style={"display": "none"},
+        children=[
+            html.Label("Vector extra: A1 b1 + A2 b2"),
+            html.Div([
+                dcc.Input(id="A1", type="number", value=2, step=1, style={"width": "48%"}),
+                dcc.Input(id="A2", type="number", value=1, step=1, style={"width": "48%", "marginLeft": "4%"}),
+            ]),
+        ],
+    ),
+]),
                 seccion("Configuración", [
                     html.Label([html.B("b"), html.Sub("1"), " — rango:"]),
-                    dcc.Input(id="b1range", type="number", value=5, step=1, style={"width": "100%"}),
+                    dcc.Input(id="b1range", type="number", value=3, step=1, style={"width": "100%"}),
                     html.Label([html.B("b"), html.Sub("2"), " — rango:"]),
-                    dcc.Input(id="b2range", type="number", value=5, step=1, style={"width": "100%"}),
-                    html.Button(
-                        "Actualizar Simulación",
-                        id="go",
-                        n_clicks=0,
-                        style={"padding": "10px", "cursor": "pointer", "fontWeight": "bold"},
-                    ),
+                    dcc.Input(id="b2range", type="number", value=3, step=1, style={"width": "100%"}),
+                    html.Label("Visualización"),
+                    dcc.Checklist(
+                        id="opciones-visual",
+                        options=[
+                            {"label": " Varillas", "value": "varillas"},
+                            {"label": " Vectores primitivos", "value": "vectores"},
+                            {"label": " Esfera de Ewald", "value": "ewald"},
+                                ],
+                        value=["varillas"],  # lo que empieza marcado
+                ),
                 ]),
 
                 seccion("Datos", [
@@ -173,17 +194,53 @@ app.layout = html.Div(
                             "border": "1px solid #ccc",
                         },
                     ),
-                ]),
-            ],
+                ]), 
+
+         # Fuera de las secciones, debajo de la última
+    html.Button(
+        "Actualizar Simulación",
+        id="go",
+        n_clicks=0,
+        style={
+            "marginTop": "12px",
+            "padding": "10px",
+            "cursor": "pointer",
+            "fontWeight": "bold",
+            "width": "100%",
+        },
+    ),          
+                    
+            ], 
+             
+              # cierra children del panel izquierdo
         ),
         html.Div(
             style={"flex": "2", "border": "3px solid #e11", "padding": "8px"},
-            children=[dcc.Graph(id="plot", figure=figura_vacia(), style={"height": "100%"})],
+            children=[dcc.Graph(
+    id="plot",
+    figure=figura_vacia(),
+    style={"height": "100%", "width": "100%"},
+    config={"responsive": True},
+)],
         ),
     ],
 )
 
 
+
+@app.callback(
+    Output("panel-reconstruccion", "style"),
+    Input("modo-reconstructed", "value"),
+)
+def mostrar_reconstruccion(opciones):
+    if opciones and "on" in opciones:
+        return {"display": "block"}
+    return {"display": "none"}
+
+
+
+
+    
 @app.callback(
     Output("panel-azimut", "style"),
     Output("panel-miller", "style"),
@@ -334,24 +391,41 @@ def actualizar_campos(opcion):
     State("phi", "value"),
     State("miller-u", "value"),
     State("miller-v", "value"),
+    State("modo-reconstructed", "value"),
+    State("A1", "value"),
+    State("A2", "value"),
+    State("opciones-visual", "value"),
     prevent_initial_call=True,
 )
-def update_plot(n_clicks, geometria, dato1, dato2, b1range, b2range, modo, phi, u, v):
+def update_plot(
+    n_clicks, geometria, dato1, dato2, b1range, b2range,
+    modo, phi, u, v, reconstructed, A1, A2, opciones_visual,
+):
     if not n_clicks:
         raise PreventUpdate
 
     a = 3.0 if not dato1 else float(dato1)
     b = a if not dato2 else float(dato2)
-    nx = 5 if not b1range else int(b1range)
-    ny = 5 if not b2range else int(b2range)
+    nx = 3 if not b1range else int(b1range)
+    ny = 3 if not b2range else int(b2range)
 
-    if modo == "miller":
-        direccion = (0.0 if u is None else float(u), 0.0 if v is None else float(v))
-    else:
-        direccion = float(0 if phi is None else phi)
+    usar_reconstruccion = bool(reconstructed) and "on" in reconstructed
+    coef_1 = 0.0 if A1 is None else float(A1)
+    coef_2 = 0.0 if A2 is None else float(A2)
 
-    return rr.calculadora(geometria, a, b, nx, ny,  modo, phi, u, v)
+    opciones = opciones_visual or []
+    flags = [
+        "varillas" in opciones,   # [0]
+        "vectores" in opciones,   # [1]
+        "ewald" in opciones,      # [2]
+    ]
 
+    return rr.calculadora(
+        geometria, a, b, nx, ny,
+        modo, phi, u, v,
+        usar_reconstruccion, coef_1, coef_2,
+        flags,
+    )
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=8765)
