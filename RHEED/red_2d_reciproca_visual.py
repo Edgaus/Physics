@@ -29,6 +29,8 @@ INPUT_STYLE = {
     "borderRadius": "6px",
     "padding": "8px 10px",
     "outline": "none",
+    "colorScheme": "dark",
+    "boxSizing": "border-box",
 }
 
 app.index_string = f"""
@@ -45,6 +47,7 @@ app.index_string = f"""
                 padding: 0;
                 background: {DARK["bg"]};
                 color: {DARK["text"]};
+                color-scheme: dark;
             }}
             summary {{
                 cursor: pointer;
@@ -68,43 +71,26 @@ app.index_string = f"""
                 color: {DARK["muted"]};
                 font-size: 14px;
             }}
-            /* Dropdowns */
-            .Select-control, .Select-menu-outer, .Select-option,
-            .Select-placeholder, .Select--single > .Select-control .Select-value,
-            .Select-input > input {{
+            /* Radio de estructura (evita el dropdown blanco de react-select) */
+            .rheed-radio label {{
+                color: {DARK["text"]} !important;
+            }}
+            .rheed-radio input[type="radio"] {{
+                accent-color: {DARK["accent"]};
+            }}
+            .rheed-radio label:has(input:checked) {{
+                border-color: {DARK["accent"]} !important;
+                box-shadow: inset 0 0 0 1px {DARK["accent"]};
+            }}
+            /* Inputs numéricos + spinners */
+            input[type="number"] {{
+                color-scheme: dark;
                 background-color: {DARK["input_bg"]} !important;
                 color: {DARK["text"]} !important;
-                border-color: {DARK["border"]} !important;
-            }}
-            .Select-menu-outer {{
                 border: 1px solid {DARK["border"]} !important;
             }}
-            .Select-option.is-focused, .Select-option:hover {{
-                background-color: {DARK["panel2"]} !important;
-            }}
-            .Select-option.is-selected {{
-                background-color: {DARK["accent"]} !important;
-                color: #fff !important;
-            }}
-            /* React-Select v2+ (Dash moderno) */
-            .dash-dropdown .Select-control,
-            div[class*="css-"][class*="-control"] {{
-                background-color: {DARK["input_bg"]} !important;
-                border-color: {DARK["border"]} !important;
-                color: {DARK["text"]} !important;
-            }}
-            div[class*="css-"][class*="-menu"] {{
-                background-color: {DARK["panel2"]} !important;
-                border: 1px solid {DARK["border"]} !important;
-            }}
-            div[class*="css-"][class*="-option"] {{
-                background-color: {DARK["panel2"]} !important;
-                color: {DARK["text"]} !important;
-            }}
-            div[class*="css-"][class*="-singleValue"],
-            div[class*="css-"][class*="-placeholder"],
-            div[class*="css-"][class*="-Input"] input {{
-                color: {DARK["text"]} !important;
+            input[type="number"]:disabled {{
+                opacity: 0.55;
             }}
             /* Tabs */
             .tab {{
@@ -233,16 +219,27 @@ app.layout = html.Div(
                 ),
                 seccion("Cristal", [
                     html.Label("Estructura cristalina"),
-                    dcc.Dropdown(
+                    dcc.RadioItems(
                         id="tipo-red-2d",
                         options=[
                             {"label": "Hexagonal", "value": "HEX"},
                             {"label": "Rectangular / Cuadrada", "value": "RECT"},
-                            {"label": "Cuadrado Centrada en Caras", "value": "CENT"},
+                            {"label": "Centrada en caras", "value": "CENT"},
                         ],
                         value="HEX",
-                        clearable=False,
-                        style={"backgroundColor": DARK["input_bg"]},
+                        className="rheed-radio",
+                        inputStyle={"marginRight": "8px", "accentColor": DARK["accent"]},
+                        labelStyle={
+                            "display": "block",
+                            "padding": "8px 10px",
+                            "marginBottom": "6px",
+                            "backgroundColor": DARK["input_bg"],
+                            "border": f"1px solid {DARK['border']}",
+                            "borderRadius": "6px",
+                            "color": DARK["text"],
+                            "cursor": "pointer",
+                        },
+                        style={"marginTop": "4px"},
                     ),
                     html.Label(id="label-dato-1", children="Parámetro de red a (Å):"),
                     dcc.Input(
