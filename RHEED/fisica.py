@@ -79,7 +79,9 @@ def _base_real(Simetria, a, b):
     if Simetria == "RECT":
         return np.array([a, 0.0]), np.array([0.0, b])
     if Simetria == "CENT":
-        return np.array([a / 2, a / 2]), np.array([a / 2, -a / 2])
+        # a1 = (a/2)(ŷ − ẑ), a2 = (a/2)(ŷ + ẑ). x̂ es la normal,
+        # así que en el plano de la figura (x, y) = (y, z) del cristal.
+        return np.array([a / 2, -a / 2]), np.array([a / 2, a / 2])
     return np.array([a, 0.0]), np.array([-0.5 * a, 0.5 * a * np.sqrt(3)])
 
 
@@ -162,9 +164,12 @@ def varillas_que_cortan(k_i, b1, b2, A1=1, A2=1):
         for j in range(-n_max, n_max + 1):
             k_f_par = k_i_par + i * B1 + j * B2
             resto = radio2 - float(np.dot(k_f_par, k_f_par))
-            if resto < 0.0:
+            # θ = 0 deja |k_∥| un ulp por encima de |k| y el haz especular
+            # desaparecía (resto ≈ −1e−15).
+            if resto < -1e-8 * radio2:
                 continue
-            kfs.append(np.array([k_f_par[0], k_f_par[1], np.sqrt(resto)], dtype=float))
+            k_perp = float(np.sqrt(resto)) if resto > 0.0 else 0.0
+            kfs.append(np.array([k_f_par[0], k_f_par[1], k_perp], dtype=float))
     return kfs
 
 
@@ -227,15 +232,47 @@ def llegan_a_pantalla(kfs, L, r):
     return llegadas
 
 
+def _ejes_superficie(Simetria):
+    """Índices (u, v, normal) del triedro.
+
+    RECT y HEX: el plano recíproco es xy y la normal es z.
+    CENT: el plano recíproco es yz y la normal es x.
+    """
+    if Simetria == "CENT":
+        return (1, 2, 0)
+    return (0, 1, 2)
+
+
+def _a_lab(Simetria, u, v, normal=0.0):
+    """Pasa componentes (u, v, normal) de la superficie al triedro x, y, z."""
+    iu, iv, inn = _ejes_superficie(Simetria)
+    punto = np.zeros(3)
+    punto[iu] = float(u)
+    punto[iv] = float(v)
+    punto[inn] = float(normal)
+    return punto
+
+
+def _desde_lab(Simetria, vec):
+    """(u, v) y la componente normal de un vector del triedro."""
+    iu, iv, inn = _ejes_superficie(Simetria)
+    vec = np.asarray(vec, dtype=float).reshape(-1)
+    return np.array([float(vec[iu]), float(vec[iv])]), float(vec[inn])
+
+
 def _primitivos_plano(Simetria, a, b):
-    """b1, b2 en el plano, en Å⁻¹."""
+    """b1, b2 en el plano de la superficie, en Å⁻¹.
+
+    El par (u, v) es (x, y) salvo en la red centrada, donde es (y, z).
+    """
     dos_pi_a = 2 * np.pi / float(a)
     lado_b = float(a if b in (None, "") else b)
     dos_pi_b = 2 * np.pi / lado_b
     if Simetria == "RECT":
         return np.array([dos_pi_a, 0.0]), np.array([0.0, dos_pi_b])
     if Simetria == "CENT":
-        return np.array([dos_pi_a, dos_pi_a]), np.array([dos_pi_a, -dos_pi_a])
+        # b1 = (2π/a)(ŷ − ẑ), b2 = (2π/a)(ŷ + ẑ), en el plano (x, y) = (y, z).
+        return np.array([dos_pi_a, -dos_pi_a]), np.array([dos_pi_a, dos_pi_a])
     if Simetria == "HEX":
         return (
             np.array([dos_pi_a, dos_pi_a / np.sqrt(3)]),
@@ -269,17 +306,19 @@ def periodos(reconstruct, A1, A2):
 def malla_reciproca(Simetria, a, b, datax, datay, reconstruct, A1, A2):
     """Nodos de la red 1×1, los de la reconstrucción y los vectores b.
 
-    b1 y b2 van en el plano (z = 0). En hexagonal, b3 = -(b1 + b2).
+    b1 y b2 van en el plano de la superficie. En hexagonal, b3 = -(b1 + b2).
+    En la red centrada ese plano es yz y la normal es x. En las demás, xy y z.
     Devuelve None si la simetría no existe o la malla queda vacía.
     """
     try:
-        b1_xy, b2_xy = _primitivos_plano(Simetria, a, b)
+        b1_uv, b2_uv = _primitivos_plano(Simetria, a, b)
     except (ValueError, ZeroDivisionError, TypeError):
         return None
 
-    b1 = np.array([b1_xy[0], b1_xy[1], 0.0])
-    b2 = np.array([b2_xy[0], b2_xy[1], 0.0])
+    b1 = _a_lab(Simetria, b1_uv[0], b1_uv[1])
+    b2 = _a_lab(Simetria, b2_uv[0], b2_uv[1])
     b3 = -(b1 + b2) if Simetria == "HEX" else None
+    ejes = _ejes_superficie(Simetria)
 
     dos_pi_a = 2 * np.pi / float(a)
     if Simetria == "RECT":
@@ -297,11 +336,8 @@ def malla_reciproca(Simetria, a, b, datax, datay, reconstruct, A1, A2):
     nodos = []
     for i in range(-int(datax), int(datax) + 1):
         for j in range(-int(datay), int(datay) + 1):
-            nodos.append((
-                i, j,
-                float(i * b1[0] + j * b2[0]),
-                float(i * b1[1] + j * b2[1]),
-            ))
+            punto = i * b1 + j * b2
+            nodos.append((i, j, float(punto[0]), float(punto[1]), float(punto[2])))
     if not nodos:
         return None
 
@@ -316,10 +352,9 @@ def malla_reciproca(Simetria, a, b, datax, datay, reconstruct, A1, A2):
                             continue
                         fi = i + p / A1i
                         fj = j + q / A2i
+                        punto = fi * b1 + fj * b2
                         recon_nodos.append((
-                            fi, fj,
-                            float(fi * b1[0] + fj * b2[0]),
-                            float(fi * b1[1] + fj * b2[1]),
+                            fi, fj, float(punto[0]), float(punto[1]), float(punto[2]),
                         ))
 
     return {
@@ -330,6 +365,7 @@ def malla_reciproca(Simetria, a, b, datax, datay, reconstruct, A1, A2):
         "b3": b3,
         "xlim": xlim,
         "ylim": ylim,
+        "ejes": ejes,
         "A1i": A1i,
         "A2i": A2i,
     }
@@ -346,7 +382,113 @@ def haz_incidente(
     )
     if float(np.linalg.norm(direccion)) == 0.0:
         return None
-    return componentes_ki(keV, _flotante(theta_deg, 2.0), direccion=direccion)
+    k_superficie = componentes_ki(keV, _flotante(theta_deg, 2.0), direccion=direccion)
+    return _a_lab(Simetria, k_superficie[0], k_superficie[1], k_superficie[2])
+
+
+def _paso_laue(alpha, beta):
+    """Paso de G·ê entre zonas de Laue de la red 1×1, en Å⁻¹."""
+    alpha, beta = abs(float(alpha)), abs(float(beta))
+    if alpha < 1e-8 and beta < 1e-8:
+        return 0.0
+    if alpha < 1e-8:
+        return beta
+    if beta < 1e-8:
+        return alpha
+    for _ in range(48):
+        alpha, beta = beta, alpha % beta
+        if beta < 1e-5 * max(alpha, 1e-8):
+            return float(alpha)
+    return float(alpha)
+
+
+def _subindice(n):
+    signos = str.maketrans("-0123456789", "₋₀₁₂₃₄₅₆₇₈₉")
+    return str(int(n)).translate(signos)
+
+
+def etiqueta_laue(Gx, paso):
+    """L₀, L₁, L₁/₂… según −Gₓ / paso."""
+    if paso <= 0.0:
+        return "L₀"
+    razon = -float(Gx) / float(paso)
+    for den in range(1, 13):
+        num = int(round(razon * den))
+        if abs(razon - num / den) < 0.06:
+            g = int(np.gcd(abs(num), den))
+            num, den = num // g, den // g
+            if den == 1:
+                return "L" + _subindice(num)
+            return "L" + _subindice(num) + "/" + _subindice(den)
+    return "L" + _subindice(int(round(razon)))
+
+
+def zonas_laue(manchas, e_x, b1, b2, k_i, L, R, A1=1, A2=1):
+    """Arcos de Laue de los puntos que llegan a la pantalla.
+
+    Gₓ = G · ê, con ê el azimut del haz. En el fósforo cada Gₓ fijo
+    cumple Y² + Z² = L² (|k|² / k_fx² − 1), k_fx = |k_∥| + Gₓ.
+    L₀ es la zona del haz especular (Gₓ = 0) si ese arco cabe en el disco.
+    manchas: (Y, Z, i, j), índices en la base b1/A1, b2/A2.
+    """
+    k_i = np.asarray(k_i, dtype=float).reshape(-1)
+    e_x = np.asarray(e_x, dtype=float).reshape(-1)[:2]
+    k_par = float(np.linalg.norm(k_i[:2]))
+    k_mod = float(np.linalg.norm(k_i))
+    if k_par <= 0.0 or k_mod <= 0.0 or L <= 0.0:
+        return []
+    A1i = max(1, int(round(float(A1))))
+    A2i = max(1, int(round(float(A2))))
+    B1 = np.asarray(b1, dtype=float).reshape(-1)[:2] / A1i
+    B2 = np.asarray(b2, dtype=float).reshape(-1)[:2] / A2i
+    paso = _paso_laue(float(np.dot(B1 * A1i, e_x)), float(np.dot(B2 * A2i, e_x)))
+    if paso <= 0.0:
+        return []
+
+    escala = min(float(np.linalg.norm(B1 * A1i)), float(np.linalg.norm(B2 * A2i)))
+    # En un azimut sin fila clara el mcd de las proyecciones se hace diminuto.
+    paso_util = paso if paso >= 0.05 * max(escala, 1e-8) else 0.0
+    tolerancia = 0.02 * paso if paso_util else 1e-4
+
+    vistos = {}
+    for _Y, _Z, i, j in manchas:
+        G = i * B1 + j * B2
+        Gx = float(np.dot(G, e_x))
+        clave = int(round(Gx / tolerancia))
+        grupo = vistos.setdefault(clave, {"gx": [], "n": 0})
+        grupo["gx"].append(Gx)
+        grupo["n"] += 1
+    if not any(abs(float(np.mean(g["gx"]))) < tolerancia for g in vistos.values()):
+        vistos["especular"] = {"gx": [0.0], "n": 0}
+
+    crudos = []
+    for grupo in vistos.values():
+        Gx = float(np.mean(grupo["gx"]))
+        # Una fila de Laue tiene varios puntos. L₀ se conserva aunque solo esté el especular.
+        if grupo["n"] < 2 and abs(Gx) > tolerancia:
+            continue
+        k_fx = k_par + Gx
+        if k_fx <= 1e-8 or abs(k_fx) >= k_mod:
+            continue
+        radio = float(L * np.sqrt((k_mod / k_fx) ** 2 - 1.0))
+        if radio <= 0.0 or radio > float(R) + 1e-6:
+            continue
+        crudos.append((Gx, radio))
+
+    if not paso_util and crudos:
+        orden = sorted(crudos, key=lambda par: -par[0])
+        i0 = int(np.argmin([abs(Gx) for Gx, _radio in orden]))
+        return [
+            {"etiqueta": "L" + _subindice(i - i0), "radio": radio, "Gx": Gx}
+            for i, (Gx, radio) in enumerate(orden)
+        ]
+
+    zonas = [
+        {"etiqueta": etiqueta_laue(Gx, paso), "radio": radio, "Gx": Gx}
+        for Gx, radio in crudos
+    ]
+    zonas.sort(key=lambda z: z["radio"])
+    return zonas
 
 
 def manchas_pantalla(
@@ -377,16 +519,21 @@ def manchas_pantalla(
         if radio_ewald(keV) <= 0.0:
             return "La energía tiene que ser mayor que cero.", None
         return "La dirección del haz no puede ser cero.", None
-    if float(np.linalg.norm(k_i[:2])) == 0.0:
-        return "El haz no tiene componente paralela hacia la pantalla.", None
-
     try:
         b1, b2 = _primitivos_plano(Simetria, a, b)
     except (ValueError, ZeroDivisionError, TypeError) as exc:
         return str(exc), None
 
+    # La pantalla sigue en el marco de la superficie: (u, v) en el plano y
+    # la tercera componente a lo largo de la normal. En la red centrada el
+    # laboratorio tiene ese plano en yz.
+    k_par, k_normal = _desde_lab(Simetria, k_i)
+    if float(np.linalg.norm(k_par)) == 0.0:
+        return "El haz no tiene componente paralela hacia la pantalla.", None
+    k_superficie = np.array([k_par[0], k_par[1], k_normal])
+
     A1i, A2i = periodos(reconstruct, A1, A2)
-    e_x = k_i[:2] / np.linalg.norm(k_i[:2])
+    e_x = k_par / np.linalg.norm(k_par)
     e_y = np.array([-e_x[1], e_x[0]])
     try:
         inversa = np.linalg.inv(np.column_stack([b1 / A1i, b2 / A2i]))
@@ -394,12 +541,12 @@ def manchas_pantalla(
         return "b1 y b2 no forman una base.", None
 
     red, recon = [], []
-    for k_f in varillas_que_cortan(k_i, b1, b2, A1i, A2i):
+    for k_f in varillas_que_cortan(k_superficie, b1, b2, A1i, A2i):
         llegadas = llegan_a_pantalla([_a_marco_pantalla(k_f, e_x, e_y)], L, R)
         if not llegadas:
             continue
         _, (Y, Z) = llegadas[0]
-        coef = inversa @ (np.asarray(k_f, dtype=float)[:2] - k_i[:2])
+        coef = inversa @ (np.asarray(k_f, dtype=float)[:2] - k_par)
         i = int(round(float(coef[0])))
         j = int(round(float(coef[1])))
         destino = recon if (i % A1i != 0) or (j % A2i != 0) else red
@@ -413,4 +560,5 @@ def manchas_pantalla(
         "A2i": A2i,
         "red": red,
         "recon": recon,
+        "zonas": zonas_laue(red + recon, e_x, b1, b2, k_superficie, L, R, A1i, A2i),
     }
